@@ -52,6 +52,11 @@ pulado em silêncio.
 3. Copiar [`CLAUDE.md`](CLAUDE.md) para a raiz do projeto, para os agentes seguirem o processo.
 4. Escrever o PRD e seguir a ordem.
 
+## Ambiente de trabalho
+
+Ferramentas, logins e acessos que cada máquina precisa (HubSpot CLI e MCP, Google Cloud CLI,
+chave da VPS), com um script que confere tudo: [`ambiente/`](ambiente/).
+
 ## Mudanças no processo
 
 Este repositório muda por commit, com o motivo na mensagem. Ajustes que vierem de um projeto real
