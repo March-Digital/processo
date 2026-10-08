@@ -25,6 +25,7 @@ nem as cole em chat.
 | MCP Meta Ads | hospedado | O Claude Code opera as contas de anúncio da Meta | `claude mcp add --transport http -s user meta-ads https://mcp.facebook.com/ads`, depois `/mcp` → meta-ads → login do Facebook |
 | GTM MCP (Stape) | hospedado | O Claude Code edita e publica no GTM web e server ([ADR 0025 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0025-mcps-da-stape.md)) | `claude mcp add --transport http -s user gtm https://gtm-mcp.stape.ai/mcp`, depois `/mcp` → gtm → login do Google com a conta que publica |
 | Stape MCP | hospedado | O Claude Code cria e configura contêineres na Stape | Chave de API da conta Stape (Account settings › API), gravada por você **num terminal fora do Claude Code** (passo 3) |
+| MCP da Hostinger | hospedado | DNS e VPS na Hostinger ([ADR 0027 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0027-mcp-da-hostinger.md)) | `claude mcp add --transport http -s user hostinger https://mcp.hostinger.com`, depois `/mcp` → hostinger → login |
 | Playwright + navegadores | atual | Testes de ponta a ponta e monitor sintético | Sem login. Navegadores em `~/.cache/ms-playwright`; bibliotecas do sistema com `sudo npx playwright install-deps` (uma vez) |
 | Chave SSH da VPS | ed25519 | Acesso `deploy@179.197.70.152` | Gerar na máquina; uma pessoa da March cadastra a pública no usuário `deploy` |
 
@@ -44,7 +45,7 @@ nem as cole em chat.
    ```
    read -rs -p "Chave da API da Stape: " k; echo; claude mcp add --transport http -s user stape https://mcp.stape.ai/mcp --header "Authorization: $k"; unset k
    ```
-   No Claude Code: `/mcp` → `gtm` → login do Google; `/mcp` → `meta-ads` → login do Facebook. Só se for rodar scripts com a Meta Ads
+   No Claude Code: `/mcp` → `gtm` → login do Google; `/mcp` → `hostinger` → login da Hostinger; `/mcp` → `meta-ads` → login do Facebook. Só se for rodar scripts com a Meta Ads
    CLI, grave o token do usuário de sistema, digitado por você (nunca colado em chat):
    ```
    umask 077; mkdir -p ~/.config/meta; read -rs -p "Token: " t; printf %s "$t" > ~/.config/meta/credentials; unset t; echo

@@ -40,7 +40,7 @@ pulado em silêncio.
 7. **Decisão de arquitetura vira ADR.** Um ADR aceito só muda por outro ADR que o substitui.
 8. **Fase 0 é de integrações e acessos.** Contas, permissões, credenciais e textos jurídicos ficam
    com uma pessoa da March. Credenciais nunca passam por chat, e-mail ou repositório.
-   Integração antes de tela: CLIs e MCPs oficiais (HubSpot, Google Cloud, Meta, Stape e GTM) vêm antes do
+   Integração antes de tela: CLIs e MCPs oficiais (HubSpot, Google Cloud, Meta, Stape, GTM e Hostinger) vêm antes do
    painel; login e tokens ficam com a pessoa.
 9. **Open source por padrão.** Ferramenta fora disso (licença não aprovada pela OSI) precisa de um
    ADR de exceção.
