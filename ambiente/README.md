@@ -6,7 +6,7 @@ ferramentas que não pedem `sudo`.
 
 ```
 bash ambiente/verificar.sh            # só confere
-bash ambiente/verificar.sh --instalar # instala HubSpot CLI, gcloud e navegadores do Playwright se faltarem
+bash ambiente/verificar.sh --instalar # instala HubSpot CLI, gcloud, Meta Ads CLI, MCP da Meta e navegadores do Playwright se faltarem
 ```
 
 Logins e chaves são **por máquina e por pessoa**: nunca copie credenciais de uma máquina para outra
@@ -21,6 +21,8 @@ nem as cole em chat.
 | HubSpot CLI (`hs`) | 8.15.0 | Apps do HubSpot como projeto | `hs init` (chave pessoal; arquivo `hubspot.config.yml` com permissão 600, fora dos repositórios) |
 | MCP HubSpotDev | 8.15.0 | Claude Code publica e valida apps do HubSpot | `hs mcp setup` → Claude Code → modo standalone → versão `8.15.0` |
 | Google Cloud CLI (`gcloud`) | atual | Projeto `site-march`, contas de serviço, federação | `gcloud auth login` e `gcloud config set project site-march` |
+| Meta Ads CLI (`meta`) | 1.2.0 | Pixels, públicos e contas de anúncio por script ([ADR 0024 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0024-meta-ads-mcp-e-cli.md)) | Token de usuário de sistema gerado no Business Suite e gravado **por você** em `~/.config/meta/credentials` (só o token, permissão 600) |
+| MCP Meta Ads | hospedado | O Claude Code opera as contas de anúncio da Meta | `claude mcp add --transport http -s user meta-ads https://mcp.facebook.com/ads`, depois `/mcp` → meta-ads → login do Facebook |
 | Playwright + navegadores | atual | Testes de ponta a ponta e monitor sintético | Sem login. Navegadores em `~/.cache/ms-playwright`; bibliotecas do sistema com `sudo npx playwright install-deps` (uma vez) |
 | Chave SSH da VPS | ed25519 | Acesso `deploy@179.197.70.152` | Gerar na máquina; uma pessoa da March cadastra a pública no usuário `deploy` |
 
@@ -35,6 +37,11 @@ nem as cole em chat.
    hs mcp setup
    gcloud auth login
    gcloud config set project site-march
+   ```
+   No Claude Code: `/mcp` → `meta-ads` → login do Facebook. Token da Meta Ads CLI, digitado por
+   você (nunca colado em chat):
+   ```
+   umask 077; mkdir -p ~/.config/meta; read -rs -p "Token: " t; printf %s "$t" > ~/.config/meta/credentials; unset t; echo
    ```
 4. Chave da VPS, gerada **nesta** máquina:
    ```

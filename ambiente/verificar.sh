@@ -3,6 +3,7 @@
 set -u
 INSTALAR=0; [ "${1:-}" = "--instalar" ] && INSTALAR=1
 HS_VERSAO=8.15.0
+META_VERSAO=1.2.0
 pend=0
 ok()   { printf '  \033[32mok\033[0m    %s\n' "$1"; }
 falta(){ printf '  \033[33mfalta\033[0m %s\n' "$1"; pend=$((pend+1)); }
@@ -23,6 +24,10 @@ if [ -z "$GCLOUD" ] && [ $INSTALAR = 1 ]; then
   rm -rf "$tmp"; GCLOUD="$HOME/google-cloud-sdk/bin/gcloud"; [ -x "$GCLOUD" ] || GCLOUD=""
 fi
 [ -n "$GCLOUD" ] && ok "gcloud $("$GCLOUD" --version 2>/dev/null | head -1 | awk '{print $4}')" || falta "Google Cloud CLI (rode com --instalar)"
+if ! command -v meta >/dev/null && [ $INSTALAR = 1 ] && command -v uv >/dev/null; then
+  uv tool install "meta-ads==$META_VERSAO" >/dev/null 2>&1
+fi
+command -v meta >/dev/null && ok "meta $(meta --version 2>/dev/null | awk '{print $3}')" || falta "Meta Ads CLI: uv tool install meta-ads==$META_VERSAO (precisa do uv e Python 3.12+)"
 # Confere os navegadores da versão atual do Playwright (versão antiga em cache não vale).
 navegadores(){
   command -v npx >/dev/null || { echo "npx"; return; }
@@ -42,6 +47,20 @@ if command -v hs >/dev/null; then
 fi
 if command -v claude >/dev/null; then
   claude mcp list 2>/dev/null | grep -qi "hubspot" && ok "MCP HubSpotDev no Claude Code" || falta "hs mcp setup (Claude Code, standalone, $HS_VERSAO)"
+fi
+if command -v claude >/dev/null; then
+  if ! claude mcp list 2>/dev/null | grep -q "^meta-ads:" && [ $INSTALAR = 1 ]; then
+    claude mcp add --transport http -s user meta-ads https://mcp.facebook.com/ads >/dev/null 2>&1
+  fi
+  m=$(claude mcp list 2>/dev/null | grep "^meta-ads:")
+  if [ -z "$m" ]; then falta "MCP Meta Ads (rode com --instalar)"
+  elif echo "$m" | grep -qi "needs auth"; then falta "MCP Meta Ads sem login: /mcp → meta-ads"
+  else ok "MCP Meta Ads"; fi
+fi
+if [ -f "$HOME/.config/meta/credentials" ]; then
+  [ "$(stat -c %a "$HOME/.config/meta/credentials")" = 600 ] && ok "token da Meta Ads CLI (600)" || falta "chmod 600 ~/.config/meta/credentials"
+else
+  falta "token da Meta Ads CLI em ~/.config/meta/credentials (ver README, passo 3)"
 fi
 if [ -n "$GCLOUD" ]; then
   conta=$("$GCLOUD" auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null)
