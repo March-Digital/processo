@@ -55,6 +55,9 @@ if command -v claude >/dev/null; then
   if ! claude mcp list 2>/dev/null | grep -q "^gtm:" && [ $INSTALAR = 1 ]; then
     claude mcp add --transport http -s user gtm https://gtm-mcp.stape.ai/mcp >/dev/null 2>&1
   fi
+  if ! claude mcp list 2>/dev/null | grep -q "^cloudflare:" && [ $INSTALAR = 1 ]; then
+    claude mcp add --transport http -s user cloudflare https://mcp.cloudflare.com/mcp >/dev/null 2>&1
+  fi
   if ! claude mcp list 2>/dev/null | grep -q "^hostinger:" && [ $INSTALAR = 1 ]; then
     claude mcp add --transport http -s user hostinger https://mcp.hostinger.com >/dev/null 2>&1
   fi
@@ -69,6 +72,7 @@ if command -v claude >/dev/null; then
   mcp meta-ads "MCP Meta Ads" "rode com --instalar"
   mcp gtm "GTM MCP (Stape)" "rode com --instalar"
   mcp hostinger "MCP da Hostinger" "rode com --instalar"
+  mcp cloudflare "MCP da Cloudflare" "rode com --instalar"
   mcp stape "Stape MCP" "grave a chave num terminal fora do Claude Code (README, passo 3)"
 fi
 # Token da Meta Ads CLI é opcional: só para scripts sem pessoa por perto (o MCP cobre o dia a dia).
