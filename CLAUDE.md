@@ -14,6 +14,8 @@ Este projeto segue o processo da March (`github.com/March-Digital/processo`).
 - Requisitos têm ID (`RF-xx`, `RNF-xx`); TRD, App Flow e Plano citam esses IDs.
 - Toda decisão de arquitetura tem um ADR em `docs/adr/`; um ADR aceito só muda por outro ADR.
 - Open source por padrão; exceções têm ADR.
+- Testes de ponta a ponta com Playwright: mudança em página, consentimento, formulário ou tag vem
+  com teste, e `npx playwright test` passa antes do PR. Só dados falsos; nunca conversão real.
 - Contas, permissões, DNS, regras de acesso a servidores e textos jurídicos são feitos por uma
   pessoa da March. Credenciais nunca passam por chat, e-mail ou repositório.
 - Design existente aprovado pelo cliente é a referência; refinamento estético só se for pedido.

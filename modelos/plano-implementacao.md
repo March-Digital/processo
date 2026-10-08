@@ -51,6 +51,7 @@ servidores e textos jurídicos não são delegados a agentes.
 | ID | Tarefa | Quem | Esforço | Depende de | RF |
 | --- | --- | --- | --- | --- | --- |
 | P1-01 | [Tarefa] | Dev | [d] | | RF-xx |
+| P1-xx | Testes com Playwright: conjuntos do TRD §10 no CI, barrando o deploy | Dev | [d] | [Tarefas de front-end] | RF-xx |
 
 **Portão 1:** [critério verificável].
 

@@ -42,7 +42,11 @@ pulado em silêncio.
    com uma pessoa da March. Credenciais nunca passam por chat, e-mail ou repositório.
 9. **Open source por padrão.** Ferramenta fora disso (licença não aprovada pela OSI) precisa de um
    ADR de exceção.
-10. **Escrita:** português do Brasil, frases curtas, número em vez de adjetivo, sem travessão.
+10. **Testes com Playwright.** Tudo o que passa pelo navegador (páginas, consentimento, formulários,
+    disparos de tag, acessibilidade, layout) tem teste de ponta a ponta com Playwright, rodando no CI
+    e barrando o deploy. O TRD de cada projeto lista os conjuntos de teste por `RF-xx`. Só dados
+    falsos; teste nunca envia conversão real.
+11. **Escrita:** português do Brasil, frases curtas, número em vez de adjetivo, sem travessão.
 
 ## Como começar um projeto
 

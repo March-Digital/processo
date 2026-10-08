@@ -32,6 +32,7 @@
 | Camada | Tecnologia | Licença |
 | --- | --- | --- |
 | [Camada] | [Tecnologia e versão] | [Licença] |
+| Testes | Playwright (`@playwright/test`) e `@axe-core/playwright` | Apache 2.0 / MPL 2.0 |
 
 ## 4. [Front-end, quando houver]
 
@@ -61,18 +62,39 @@
 | --- | --- | --- | --- |
 | [Sinal] | [Fonte] | [Limite] | [Canal] |
 
-## 10. Requisitos não funcionais
+## 10. Testes
+
+Playwright para tudo o que passa pelo navegador; testes de unidade para regras do back-end. Rodam na
+máquina, no CI em todo push e PR (barram o deploy) e, o conjunto de fumaça, depois de cada deploy e
+como monitor sintético.
+
+| Conjunto | O que verifica | RF / RNF |
+| --- | --- | --- |
+| [Conteúdo e navegação] | [O que abre, o que cada botão faz] | RF-xx |
+| [Consentimento, quando houver] | [Nenhuma tag antes da escolha; sinais corretos em cada combinação] | RF-xx |
+| [Formulário, quando houver] | [Estados, erros, confirmação, duplicidade] | RF-xx |
+| [Rastreamento, quando houver] | [Eventos, `event_id`, nenhum dado pessoal em dataLayer e URLs] | RF-xx |
+| Acessibilidade | `axe` sem violações A e AA; navegação só com teclado | RNF-xx |
+| Visual | Capturas de celular e computador comparadas às de referência do Brief de Design | RF-xx |
+| Fumaça | [Caminho mínimo que prova que o sistema está vivo] | RF-xx |
+
+**Navegadores:** Chromium, WebKit e Firefox; perfis de celular e computador.
+
+**Regras:** só dados falsos; no CI, chamadas às plataformas são interceptadas e verificadas, nunca
+repassadas; rastros e vídeos de falha ficam 7 dias como artefato do CI.
+
+## 11. Requisitos não funcionais
 
 | ID | Requisito | Medida |
 | --- | --- | --- |
 | RNF-01 | [Requisito] | [Medida] |
 
-## 11. Rastreabilidade
+## 12. Rastreabilidade
 
 | RF | Atendido por (seção) |
 | --- | --- |
 | RF-01 | [Seção] |
 
-## 12. Pontos em aberto técnicos
+## 13. Pontos em aberto técnicos
 
 - [ ] [Pergunta.]

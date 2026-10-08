@@ -6,7 +6,7 @@ ferramentas que não pedem `sudo`.
 
 ```
 bash ambiente/verificar.sh            # só confere
-bash ambiente/verificar.sh --instalar # instala HubSpot CLI e gcloud se faltarem
+bash ambiente/verificar.sh --instalar # instala HubSpot CLI, gcloud e navegadores do Playwright se faltarem
 ```
 
 Logins e chaves são **por máquina e por pessoa**: nunca copie credenciais de uma máquina para outra
@@ -21,12 +21,14 @@ nem as cole em chat.
 | HubSpot CLI (`hs`) | 8.15.0 | Apps do HubSpot como projeto | `hs init` (chave pessoal; arquivo `hubspot.config.yml` com permissão 600, fora dos repositórios) |
 | MCP HubSpotDev | 8.15.0 | Claude Code publica e valida apps do HubSpot | `hs mcp setup` → Claude Code → modo standalone → versão `8.15.0` |
 | Google Cloud CLI (`gcloud`) | atual | Projeto `site-march`, contas de serviço, federação | `gcloud auth login` e `gcloud config set project site-march` |
+| Playwright + navegadores | atual | Testes de ponta a ponta e monitor sintético | Sem login. Navegadores em `~/.cache/ms-playwright`; bibliotecas do sistema com `sudo npx playwright install-deps` (uma vez) |
 | Chave SSH da VPS | ed25519 | Acesso `deploy@179.197.70.152` | Gerar na máquina; uma pessoa da March cadastra a pública no usuário `deploy` |
 
 ## Passo a passo numa máquina nova
 
 1. Instalar Node.js 24 LTS e o `gh`; `gh auth login`.
-2. `bash ambiente/verificar.sh --instalar`.
+2. `bash ambiente/verificar.sh --instalar`. Para as bibliotecas de sistema dos navegadores do
+   Playwright, uma vez: `sudo npx playwright install-deps`.
 3. Num terminal separado (são interativos):
    ```
    hs init
