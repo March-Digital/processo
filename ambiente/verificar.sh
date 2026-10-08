@@ -75,6 +75,11 @@ if command -v claude >/dev/null; then
   mcp cloudflare "MCP da Cloudflare" "rode com --instalar"
   mcp stape "Stape MCP" "grave a chave num terminal fora do Claude Code (README, passo 3)"
 fi
+if [ -f "$HOME/.config/healthchecks/api-key" ]; then
+  [ "$(stat -c %a "$HOME/.config/healthchecks/api-key")" = 600 ] && ok "chave do Healthchecks (600)" || falta "chmod 600 ~/.config/healthchecks/api-key"
+else
+  falta "chave do Healthchecks em ~/.config/healthchecks/api-key (README, passo 3)"
+fi
 # Token da Meta Ads CLI é opcional: só para scripts sem pessoa por perto (o MCP cobre o dia a dia).
 if [ -f "$HOME/.config/meta/credentials" ]; then
   [ "$(stat -c %a "$HOME/.config/meta/credentials")" = 600 ] && ok "token da Meta Ads CLI (600)" || falta "chmod 600 ~/.config/meta/credentials"
