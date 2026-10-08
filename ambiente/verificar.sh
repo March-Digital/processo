@@ -57,10 +57,11 @@ if command -v claude >/dev/null; then
   elif echo "$m" | grep -qi "needs auth"; then falta "MCP Meta Ads sem login: /mcp → meta-ads"
   else ok "MCP Meta Ads"; fi
 fi
+# Token da Meta Ads CLI é opcional: só para scripts sem pessoa por perto (o MCP cobre o dia a dia).
 if [ -f "$HOME/.config/meta/credentials" ]; then
   [ "$(stat -c %a "$HOME/.config/meta/credentials")" = 600 ] && ok "token da Meta Ads CLI (600)" || falta "chmod 600 ~/.config/meta/credentials"
 else
-  falta "token da Meta Ads CLI em ~/.config/meta/credentials (ver README, passo 3)"
+  printf '  \033[2mopcional\033[0m token da Meta Ads CLI (só para scripts; ver README)\n'
 fi
 if [ -n "$GCLOUD" ]; then
   conta=$("$GCLOUD" auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null)
