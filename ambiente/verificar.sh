@@ -52,10 +52,20 @@ if command -v claude >/dev/null; then
   if ! claude mcp list 2>/dev/null | grep -q "^meta-ads:" && [ $INSTALAR = 1 ]; then
     claude mcp add --transport http -s user meta-ads https://mcp.facebook.com/ads >/dev/null 2>&1
   fi
-  m=$(claude mcp list 2>/dev/null | grep "^meta-ads:")
-  if [ -z "$m" ]; then falta "MCP Meta Ads (rode com --instalar)"
-  elif echo "$m" | grep -qi "needs auth"; then falta "MCP Meta Ads sem login: /mcp → meta-ads"
-  else ok "MCP Meta Ads"; fi
+  if ! claude mcp list 2>/dev/null | grep -q "^gtm:" && [ $INSTALAR = 1 ]; then
+    claude mcp add --transport http -s user gtm https://gtm-mcp.stape.ai/mcp >/dev/null 2>&1
+  fi
+  lista=$(claude mcp list 2>/dev/null)
+  mcp(){ # nome, rótulo, como resolver
+    m=$(echo "$lista" | grep "^$1:")
+    if [ -z "$m" ]; then falta "$2: $3"
+    elif echo "$m" | grep -qi "needs auth"; then falta "$2 sem login: /mcp → $1"
+    elif echo "$m" | grep -q "✘"; then falta "$2 não conecta: $3"
+    else ok "$2"; fi
+  }
+  mcp meta-ads "MCP Meta Ads" "rode com --instalar"
+  mcp gtm "GTM MCP (Stape)" "rode com --instalar"
+  mcp stape "Stape MCP" "grave a chave num terminal fora do Claude Code (README, passo 3)"
 fi
 # Token da Meta Ads CLI é opcional: só para scripts sem pessoa por perto (o MCP cobre o dia a dia).
 if [ -f "$HOME/.config/meta/credentials" ]; then
