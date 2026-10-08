@@ -16,7 +16,7 @@ Este projeto segue o processo da March (`github.com/March-Digital/processo`).
 - Open source por padrão; exceções têm ADR.
 - Testes de ponta a ponta com Playwright: mudança em página, consentimento, formulário ou tag vem
   com teste, e `npx playwright test` passa antes do PR. Só dados falsos; nunca conversão real.
-- Integração antes de tela: use as CLIs e MCPs oficiais (HubSpot, Google Cloud, Meta, Stape, GTM, Hostinger e Cloudflare) antes do
+- Integração antes de tela: use as CLIs e MCPs oficiais (HubSpot, Google Cloud, Meta, Stape, GTM, Hostinger, Cloudflare e UptimeRobot) antes do
   painel; o login e os tokens são feitos pela pessoa, nunca pelo agente.
 - Contas, permissões, DNS, regras de acesso a servidores e textos jurídicos são feitos por uma
   pessoa da March. Credenciais nunca passam por chat, e-mail ou repositório.

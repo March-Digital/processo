@@ -28,6 +28,8 @@ nem as cole em chat.
 | MCP da Hostinger | hospedado | DNS e VPS na Hostinger ([ADR 0027 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0027-mcp-da-hostinger.md)) | `claude mcp add --transport http -s user hostinger https://mcp.hostinger.com`, depois `/mcp` → hostinger → login |
 | MCP da Cloudflare | hospedado | R2 (backup) e demais produtos da Cloudflare ([ADR 0028 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0028-cloudflare-r2-e-mcp.md)) | `claude mcp add --transport http -s user cloudflare https://mcp.cloudflare.com/mcp`, depois `/mcp` → cloudflare → login |
 | Chave da API do Healthchecks.io | — | Aplicar os checks como código ([ADR 0030 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0030-healthchecks-como-codigo.md)) | Chave completa criada em Project Settings › API Access e gravada **por você** em `~/.config/healthchecks/api-key` (permissão 600, passo 3) |
+| MCP do UptimeRobot | hospedado | Monitor externo do site ([ADR 0031 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0031-uptimerobot-mcp-e-cli.md)) | `claude mcp add --transport http -s user uptimerobot https://mcp.uptimerobot.com/mcp`, depois `/mcp` → uptimerobot → login |
+| CLI do UptimeRobot (`uptimerobot`) | 1.0.0 | Monitores por script | **Opcional.** `uptimerobot auth login` com chave de API criada por você em dashboard.uptimerobot.com/integrations |
 | Playwright + navegadores | atual | Testes de ponta a ponta e monitor sintético | Sem login. Navegadores em `~/.cache/ms-playwright`; bibliotecas do sistema com `sudo npx playwright install-deps` (uma vez) |
 | Chave SSH da VPS | ed25519 | Acesso `deploy@179.197.70.152` | Gerar na máquina; uma pessoa da March cadastra a pública no usuário `deploy` |
 
@@ -51,7 +53,7 @@ nem as cole em chat.
    ```
    umask 077; mkdir -p ~/.config/healthchecks; read -rs -p "Chave do Healthchecks: " k; printf %s "$k" > ~/.config/healthchecks/api-key; unset k; echo
    ```
-   No Claude Code: `/mcp` → `gtm` → login do Google; `/mcp` → `hostinger` → login da Hostinger; `/mcp` → `cloudflare` → login da Cloudflare; `/mcp` → `meta-ads` → login do Facebook. Só se for rodar scripts com a Meta Ads
+   No Claude Code: `/mcp` → `gtm` → login do Google; `/mcp` → `hostinger` → login da Hostinger; `/mcp` → `cloudflare` → login da Cloudflare; `/mcp` → `uptimerobot` → login do UptimeRobot; `/mcp` → `meta-ads` → login do Facebook. Só se for rodar scripts com a Meta Ads
    CLI, grave o token do usuário de sistema, digitado por você (nunca colado em chat):
    ```
    umask 077; mkdir -p ~/.config/meta; read -rs -p "Token: " t; printf %s "$t" > ~/.config/meta/credentials; unset t; echo

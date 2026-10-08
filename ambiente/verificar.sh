@@ -4,6 +4,7 @@ set -u
 INSTALAR=0; [ "${1:-}" = "--instalar" ] && INSTALAR=1
 HS_VERSAO=8.15.0
 META_VERSAO=1.2.0
+UR_VERSAO=1.0.0
 pend=0
 ok()   { printf '  \033[32mok\033[0m    %s\n' "$1"; }
 falta(){ printf '  \033[33mfalta\033[0m %s\n' "$1"; pend=$((pend+1)); }
@@ -28,6 +29,10 @@ if ! command -v meta >/dev/null && [ $INSTALAR = 1 ] && command -v uv >/dev/null
   uv tool install "meta-ads==$META_VERSAO" >/dev/null 2>&1
 fi
 command -v meta >/dev/null && ok "meta $(meta --version 2>/dev/null | awk '{print $3}')" || falta "Meta Ads CLI: uv tool install meta-ads==$META_VERSAO (precisa do uv e Python 3.12+)"
+if ! command -v uptimerobot >/dev/null && [ $INSTALAR = 1 ] && command -v npm >/dev/null; then
+  npm install -g "@uptimerobot/cli@$UR_VERSAO" >/dev/null 2>&1
+fi
+command -v uptimerobot >/dev/null && ok "uptimerobot $(uptimerobot --version 2>/dev/null | cut -d/ -f3 | cut -d' ' -f1)" || falta "CLI do UptimeRobot: npm install -g @uptimerobot/cli@$UR_VERSAO"
 # Confere os navegadores da versão atual do Playwright (versão antiga em cache não vale).
 navegadores(){
   command -v npx >/dev/null || { echo "npx"; return; }
@@ -58,6 +63,9 @@ if command -v claude >/dev/null; then
   if ! claude mcp list 2>/dev/null | grep -q "^cloudflare:" && [ $INSTALAR = 1 ]; then
     claude mcp add --transport http -s user cloudflare https://mcp.cloudflare.com/mcp >/dev/null 2>&1
   fi
+  if ! claude mcp list 2>/dev/null | grep -q "^uptimerobot:" && [ $INSTALAR = 1 ]; then
+    claude mcp add --transport http -s user uptimerobot https://mcp.uptimerobot.com/mcp >/dev/null 2>&1
+  fi
   if ! claude mcp list 2>/dev/null | grep -q "^hostinger:" && [ $INSTALAR = 1 ]; then
     claude mcp add --transport http -s user hostinger https://mcp.hostinger.com >/dev/null 2>&1
   fi
@@ -73,6 +81,7 @@ if command -v claude >/dev/null; then
   mcp gtm "GTM MCP (Stape)" "rode com --instalar"
   mcp hostinger "MCP da Hostinger" "rode com --instalar"
   mcp cloudflare "MCP da Cloudflare" "rode com --instalar"
+  mcp uptimerobot "MCP do UptimeRobot" "rode com --instalar"
   mcp stape "Stape MCP" "grave a chave num terminal fora do Claude Code (README, passo 3)"
 fi
 if [ -f "$HOME/.config/healthchecks/api-key" ]; then
