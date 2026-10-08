@@ -23,8 +23,12 @@ if [ -z "$GCLOUD" ] && [ $INSTALAR = 1 ]; then
   rm -rf "$tmp"; GCLOUD="$HOME/google-cloud-sdk/bin/gcloud"; [ -x "$GCLOUD" ] || GCLOUD=""
 fi
 [ -n "$GCLOUD" ] && ok "gcloud $("$GCLOUD" --version 2>/dev/null | head -1 | awk '{print $4}')" || falta "Google Cloud CLI (rode com --instalar)"
-PW="${PLAYWRIGHT_BROWSERS_PATH:-$HOME/.cache/ms-playwright}"
-navegadores(){ for n in chromium webkit firefox; do ls -d "$PW"/$n-* >/dev/null 2>&1 || echo "$n"; done; }
+# Confere os navegadores da versão atual do Playwright (versão antiga em cache não vale).
+navegadores(){
+  command -v npx >/dev/null || { echo "npx"; return; }
+  npx -y playwright install --dry-run chromium webkit firefox 2>/dev/null \
+    | awk '/Install location:/{print $3}' | while read -r d; do [ -d "$d" ] || basename "$d"; done
+}
 if [ -n "$(navegadores)" ] && [ $INSTALAR = 1 ] && command -v npx >/dev/null; then
   npx -y playwright install chromium webkit firefox >/dev/null 2>&1
 fi
