@@ -6,7 +6,7 @@
 #   - pacotes npm com --ignore-scripts (nenhum script de instalação de terceiros roda);
 #   - gcloud em versão fixa, conferido por SHA-256 antes de extrair;
 #   - nunca com sudo, nunca mexendo em arquivos de shell sem avisar.
-# MCPs não são registrados aqui: cada projeto registra os seus (ver README, "MCPs por projeto").
+# MCPs não são registrados aqui: o registro é feito pela pessoa, uma vez (ver README, "MCPs").
 set -u
 INSTALAR=0; [ "${1:-}" = "--instalar" ] && INSTALAR=1
 
@@ -127,12 +127,12 @@ else
   opcional "token da Meta Ads CLI (só para scripts; ver README)"
 fi
 
-echo "MCPs (registrados por projeto; aqui só confiro se existem e se estão logados)"
+echo "MCPs (escopo do usuário; aqui só confiro se existem e se estão logados)"
 if command -v claude >/dev/null; then
   lista=$(claude mcp list 2>/dev/null)
   mcp(){ # nome, rótulo
     m=$(echo "$lista" | grep "^$1:")
-    if [ -z "$m" ]; then falta "$2: registre no projeto que usa (README, \"MCPs por projeto\")"
+    if [ -z "$m" ]; then falta "$2: registre com claude mcp add -s user (README, \"MCPs\")"
     elif echo "$m" | grep -qi "needs auth"; then falta "$2 sem login: /mcp → $1"
     elif echo "$m" | grep -q "✘"; then falta "$2 não conecta"
     else ok "$2"; fi

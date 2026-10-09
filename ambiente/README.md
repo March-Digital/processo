@@ -10,7 +10,7 @@ bash ambiente/verificar.sh --instalar # instala o que falta, sempre em versão f
 
 Regras do `--instalar`: pacotes npm com `--ignore-scripts` (nenhum script de instalação de terceiros
 roda), `gcloud` conferido por SHA-256 antes de extrair, nunca `sudo`, nada de mexer em `~/.bashrc`
-sem avisar. Ele **não** registra MCPs: cada projeto registra os seus (seção "MCPs por projeto").
+sem avisar. Ele **não** registra MCPs: o registro é feito por você, uma vez (seção "MCPs").
 
 Logins e chaves são **por máquina e por pessoa**: nunca copie credenciais de uma máquina para outra
 nem as cole em chat.
@@ -25,13 +25,13 @@ nem as cole em chat.
 | MCP HubSpotDev | 8.15.0 | Claude Code publica e valida apps do HubSpot | `hs mcp setup` → Claude Code → modo standalone → versão `8.15.0` |
 | Google Cloud CLI (`gcloud`) | 588.0.0 | Projeto `site-march`, contas de serviço, federação | `gcloud auth login` e `gcloud config set project site-march` |
 | Meta Ads CLI (`meta`) | 1.2.0 | Pixels, públicos e contas de anúncio por script ([ADR 0024 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0024-meta-ads-mcp-e-cli.md)) | **Opcional.** Só para scripts que rodam sem pessoa por perto; no dia a dia o MCP basta. Token de usuário de sistema gerado no Business Suite e gravado **por você** em `~/.config/meta/credentials` (só o token, permissão 600) |
-| MCP Meta Ads | hospedado | O Claude Code opera as contas de anúncio da Meta | Na pasta do projeto: `claude mcp add --transport http -s local meta-ads https://mcp.facebook.com/ads`, depois `/mcp` → meta-ads → login do Facebook |
-| GTM MCP (Stape) | hospedado | O Claude Code edita e publica no GTM web e server ([ADR 0025 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0025-mcps-da-stape.md)) | Na pasta do projeto: `claude mcp add --transport http -s local gtm https://gtm-mcp.stape.ai/mcp`, depois `/mcp` → gtm → login do Google com a conta que publica |
+| MCP Meta Ads | hospedado | O Claude Code opera as contas de anúncio da Meta | `claude mcp add --transport http -s user meta-ads https://mcp.facebook.com/ads`, depois `/mcp` → meta-ads → login do Facebook |
+| GTM MCP (Stape) | hospedado | O Claude Code edita e publica no GTM web e server ([ADR 0025 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0025-mcps-da-stape.md)) | `claude mcp add --transport http -s user gtm https://gtm-mcp.stape.ai/mcp`, depois `/mcp` → gtm → login do Google com a conta que publica |
 | Stape MCP | hospedado | O Claude Code cria e configura contêineres na Stape | Chave de API da conta Stape (Account settings › API), gravada por você **num terminal fora do Claude Code** (passo 3) |
-| MCP da Hostinger | hospedado | DNS e VPS na Hostinger ([ADR 0027 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0027-mcp-da-hostinger.md)) | Na pasta do projeto: `claude mcp add --transport http -s local hostinger https://mcp.hostinger.com`, depois `/mcp` → hostinger → login |
-| MCP da Cloudflare | hospedado | R2 (backup) e demais produtos da Cloudflare ([ADR 0028 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0028-cloudflare-r2-e-mcp.md)) | Na pasta do projeto: `claude mcp add --transport http -s local cloudflare https://mcp.cloudflare.com/mcp`, depois `/mcp` → cloudflare → login |
+| MCP da Hostinger | hospedado | DNS e VPS na Hostinger ([ADR 0027 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0027-mcp-da-hostinger.md)) | `claude mcp add --transport http -s user hostinger https://mcp.hostinger.com`, depois `/mcp` → hostinger → login |
+| MCP da Cloudflare | hospedado | R2 (backup) e demais produtos da Cloudflare ([ADR 0028 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0028-cloudflare-r2-e-mcp.md)) | `claude mcp add --transport http -s user cloudflare https://mcp.cloudflare.com/mcp`, depois `/mcp` → cloudflare → login |
 | Chave da API do Healthchecks.io | — | Aplicar os checks como código ([ADR 0030 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0030-healthchecks-como-codigo.md)) | Chave completa criada em Project Settings › API Access e gravada **por você** em `~/.config/healthchecks/api-key` (permissão 600, passo 3) |
-| MCP do UptimeRobot | hospedado | Monitor externo do site ([ADR 0031 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0031-uptimerobot-mcp-e-cli.md)) | Na pasta do projeto: `claude mcp add --transport http -s local uptimerobot https://mcp.uptimerobot.com/mcp`, depois `/mcp` → uptimerobot → login |
+| MCP do UptimeRobot | hospedado | Monitor externo do site ([ADR 0031 do site-march](https://github.com/March-Digital/site-march/blob/main/docs/adr/0031-uptimerobot-mcp-e-cli.md)) | `claude mcp add --transport http -s user uptimerobot https://mcp.uptimerobot.com/mcp`, depois `/mcp` → uptimerobot → login |
 | CLI do UptimeRobot (`uptimerobot`) | 1.0.0 | Monitores por script | **Opcional.** `uptimerobot auth login` com chave de API criada por você em dashboard.uptimerobot.com/integrations |
 | Playwright + navegadores | 1.64.0 | Testes de ponta a ponta e monitor sintético | Sem login. CLI no prefixo global do npm; navegadores em `~/.cache/ms-playwright`; bibliotecas do sistema uma vez, com a CLI fixada (passo 2) |
 | Chave SSH da VPS | ed25519 | Acesso `deploy@179.197.70.152` | Gerar na máquina; uma pessoa da March cadastra a pública no usuário `deploy` |
@@ -51,11 +51,10 @@ nem as cole em chat.
    gcloud auth login
    gcloud config set project site-march
    ```
-   Stape MCP, num terminal fora do Claude Code (o `!` do Claude Code não espera digitação), **na
-   pasta do projeto**. A chave fica alguns segundos visível na lista de processos enquanto o comando
+   Stape MCP, num terminal fora do Claude Code (o `!` do Claude Code não espera digitação). A chave fica alguns segundos visível na lista de processos enquanto o comando
    roda e depois em `~/.claude.json`: use numa máquina só sua e proteja o arquivo (seção abaixo).
    ```
-   read -rs -p "Chave da API da Stape: " k; echo; claude mcp add --transport http -s local stape https://mcp.stape.ai/mcp --header "Authorization: $k"; unset k
+   read -rs -p "Chave da API da Stape: " k; echo; claude mcp add --transport http -s user stape https://mcp.stape.ai/mcp --header "Authorization: $k"; unset k
    ```
    Chave da API do Healthchecks.io, no mesmo terminal (o `umask` só vale dentro dos parênteses):
    ```
@@ -85,13 +84,12 @@ nem as cole em chat.
    Nunca use a forma curta `Bash(ssh -i ~/.ssh/march_vps_<maquina>:*)`.
 5. `bash ambiente/verificar.sh` até não sobrar pendência.
 
-## MCPs por projeto
+## MCPs
 
-Os MCPs dão ao agente poder sobre contas reais (DNS, VPS, GTM, anúncios). Registre cada um **só no
-projeto que o usa**, com `-s local` dentro da pasta do projeto: fica guardado na configuração do
-Claude Code da sua máquina (fora do repositório) e não vale em outros projetos, como repositórios de
-clientes. Não use `-s user`, que vale para tudo. O `verificar.sh` só confere se existem e se estão
-logados.
+Os MCPs ficam no escopo do usuário (`-s user`): valem para todos os projetos da máquina, com um
+login só. Decisão da March em 09/10/2026. Eles dão ao agente poder sobre contas reais (DNS, VPS,
+GTM, anúncios); por isso, em repositórios de terceiros, revise o que o agente pede antes de aprovar.
+O `verificar.sh` confere se existem e se estão logados.
 
 ## Proteger as credenciais do próprio agente
 
