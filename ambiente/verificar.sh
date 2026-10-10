@@ -113,13 +113,6 @@ if [ -n "$GCLOUD" ]; then
   conta=$("$GCLOUD" auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null)
   [ -n "$conta" ] && ok "gcloud ($conta)" || falta "gcloud auth login"
   [ "$("$GCLOUD" config get-value project 2>/dev/null)" = "site-march" ] && ok "gcloud projeto site-march" || falta "gcloud config set project site-march"
-  # Conselho (ADR 0006 do March-Digital/conselho): token de 1 hora pela conta de serviço, sem chave.
-  if [ -n "$conta" ]; then
-    "$GCLOUD" auth print-access-token --impersonate-service-account=conselho@site-march.iam.gserviceaccount.com \
-      --scopes=https://www.googleapis.com/auth/drive >/dev/null 2>&1 \
-      && ok "Drive do conselho (conselho@site-march)" \
-      || opcional "Drive do conselho: sem acesso a conselho@site-march (fase 0 do conselho; só para quem conduz casos)"
-  fi
 fi
 for f in "$HOME/.config/healthchecks/api-key"; do
   if [ -f "$f" ]; then
