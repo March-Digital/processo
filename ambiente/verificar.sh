@@ -11,6 +11,7 @@ set -u
 INSTALAR=0; [ "${1:-}" = "--instalar" ] && INSTALAR=1
 
 HS_VERSAO=8.15.0
+AWS_MCP_VERSAO=1.7.0   # mcp-proxy-for-aws (Apache 2.0), publicada em 15/09/2026
 META_VERSAO=1.2.0
 UR_VERSAO=1.0.0
 PW_VERSAO=1.64.0
@@ -127,6 +128,16 @@ else
   opcional "token da Meta Ads CLI (só para scripts; ver README)"
 fi
 
+# AWS (conta da March, nova experiência): CLI e login pessoal pelo navegador, sem chave gravada.
+AWS=$(command -v aws || { [ -x "$HOME/.local/bin/aws" ] && echo "$HOME/.local/bin/aws"; } || true)
+if [ -n "$AWS" ]; then
+  ok "aws $("$AWS" --version 2>&1 | awk '{print $1}' | cut -d/ -f2)"
+  "$AWS" sts get-caller-identity --profile march >/dev/null 2>&1 && ok "login da AWS (perfil march)" \
+    || falta "login da AWS: aws login --region us-east-2 --profile march (README, \"AWS\")"
+else
+  falta "AWS CLI 2 (README, \"AWS\")"
+fi
+
 echo "MCPs (escopo do usuário; aqui só confiro se existem e se estão logados)"
 if command -v claude >/dev/null; then
   lista=$(claude mcp list 2>/dev/null)
@@ -144,6 +155,9 @@ if command -v claude >/dev/null; then
   mcp hostinger "MCP da Hostinger"
   mcp cloudflare "MCP da Cloudflare"
   mcp uptimerobot "MCP do UptimeRobot"
+  mcp aws-mcp "MCP da AWS"
+  claude mcp get aws-mcp 2>/dev/null | grep -q "mcp-proxy-for-aws@$AWS_MCP_VERSAO" \
+    || falta "MCP da AWS fora da versão fixa $AWS_MCP_VERSAO (README, \"AWS\")"
 else
   falta "Claude Code (comando claude)"
 fi
