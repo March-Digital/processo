@@ -1,0 +1,9 @@
+{
+  "name": "processo",
+  "private": true,
+  "type": "module",
+  "description": "Modelos e conferência do processo da March",
+  "bin": { "conferir": "ferramentas/conferir.mjs" },
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test test/*.test.mjs" }
+}
