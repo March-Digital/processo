@@ -32,7 +32,7 @@ ferramenta, `ferramentas/conferir.mjs`.
 | [`modelos/`](modelos/) | Copiar para `docs/` do projeto novo: PRD, TRD, Schema, App Flow, Brief de Design, Plano e o modelo de ADR |
 | [`CLAUDE.md`](CLAUDE.md) | Copiar para a raiz do projeto novo e preencher "Neste projeto" |
 | [`modelos/descritivo.md`](modelos/descritivo.md) | Modelo de todo descritivo lido por agente: README, CLAUDE.md, rotina, agente, skill, regra e método. Sete seções; o trecho executável em tags XML |
-| [`ferramentas/conferir.mjs`](ferramentas/conferir.mjs) | Conferência sem dependência: `descritivos` (as sete seções e as tags) e `notas` (as quatro facetas e a ligação). Cada repositório chama no próprio teste. `npm test` testa a conferência |
+| [`ferramentas/conferir.mjs`](ferramentas/conferir.mjs) | Conferência sem dependência: `descritivos` (as sete seções e as tags) e `notas` (as quatro facetas, a ligação de ida e de volta dentro do texto e, com `--modelos`, as seções do modelo de cada tipo e nenhum travessão). Cada repositório chama no próprio teste. `npm test` testa a conferência |
 
 ## Passos
 
