@@ -16,6 +16,8 @@ As regras e o ambiente saíram daqui em 30/10/2026 (D2 do PRD do motor, P2-03).
 | --- | --- |
 | [`modelos/`](modelos/) | Copiar para `docs/` do projeto novo: PRD, TRD, Schema, App Flow, Brief de Design, Plano e o modelo de ADR |
 | [`CLAUDE.md`](CLAUDE.md) | Copiar para a raiz do projeto novo e preencher "Neste projeto" |
+| [`modelos/descritivo.md`](modelos/descritivo.md) | Modelo de todo descritivo lido por agente: README, CLAUDE.md, rotina, agente, skill, regra e método. Sete seções; o trecho executável em tags XML |
+| [`ferramentas/conferir.mjs`](ferramentas/conferir.mjs) | Conferência sem dependência: `descritivos` (as sete seções e as tags) e `notas` (as quatro facetas e a ligação). Cada repositório chama no próprio teste. `npm test` testa a conferência |
 
 Os modelos mudam por PR, com o motivo na mensagem, depois que o projeto que pediu a mudança for
 aprovado.
