@@ -39,9 +39,11 @@ ferramenta, `ferramentas/conferir.mjs`.
 1. Projeto novo: copie [`modelos/`](modelos/) para `docs/` do projeto.
 2. Copie o [`CLAUDE.md`](CLAUDE.md) para a raiz do projeto novo e preencha cada "Neste projeto".
 3. Descritivo novo: siga [`modelos/descritivo.md`](modelos/descritivo.md).
-4. No teste do repositório, chame `ferramentas/conferir.mjs descritivos` e
-   `ferramentas/conferir.mjs notas`.
-5. Mudou a conferência: rode `npm test`.
+4. No repositório, ponha o processo como dependência de desenvolvimento, presa a um commit:
+   `"processo": "https://codeload.github.com/March-Digital/processo/tar.gz/<commit>"`. O
+   repositório é público, então o `npm ci` baixa sem credencial, até no Docker e no CI.
+5. No `npm test` do repositório, chame `conferir descritivos` e, onde houver notas, `conferir notas`.
+6. Mudou a conferência: rode `npm test` aqui e, depois do merge, troque o commit em cada repositório.
 
 ## Saída
 

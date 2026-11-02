@@ -5,5 +5,5 @@
   "description": "Modelos e conferência do processo da March",
   "bin": { "conferir": "ferramentas/conferir.mjs" },
   "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test test/*.test.mjs" }
+  "scripts": { "test": "node --test test/*.test.mjs && node ferramentas/conferir.mjs descritivos README.md CLAUDE.md" }
 }
