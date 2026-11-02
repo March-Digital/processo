@@ -21,7 +21,7 @@ ferramenta, `ferramentas/conferir.mjs`.
 
 ## Fontes
 
-1. **Regras do processo:** [`cerebro/regras/processo.md`](https://github.com/March-Digital/cerebro/blob/main/regras/processo.md).
+1. **Regras do processo:** [`cerebro/operacao/processo.md`](https://github.com/March-Digital/cerebro/blob/main/operacao/processo.md).
    É a fonte única; o `CLAUDE.md` de cada projeto importa a nota.
 2. **Ambiente de trabalho:** [`motor/scripts/ambiente.sh`](https://github.com/March-Digital/motor/blob/main/scripts/ambiente.sh)
    e o guia [`ambiente.md`](https://github.com/March-Digital/motor/blob/main/scripts/ambiente.md).

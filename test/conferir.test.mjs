@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, readFileSync, symlinkSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { conferirDescritivo, conferirNotas, lerCabecalho, ligacoes, ligacoesNoTexto, temTravessao, rodar, SECOES, TAGS } from '../ferramentas/conferir.mjs';
@@ -61,6 +63,9 @@ test('ligação no texto: linha só de ligações não conta; frase com o porqu�
   assert.deepEqual(ligacoesNoTexto('- [[a]]'), []);
   assert.deepEqual(ligacoesNoTexto('1. [[a]]: o tom de cada peça.'), ['a']);
   assert.deepEqual(ligacoesNoTexto('```\nO tom vem de [[a]] sempre.\n```'), []);
+  assert.deepEqual(ligacoesNoTexto('Para quem gera leads e tem vendedor\n(ver [[dna]]).'), ['dna']); // parágrafo quebrado
+  assert.deepEqual(ligacoesNoTexto('> Veio de `x/y.md` em 01/11/2026. Caminhos entre crases são do x. Ligada a: [[a]], [[b]].'), []);
+  assert.deepEqual(ligacoesNoTexto('- [[a]]\n- [[b]]'), []);
 });
 
 test('modelo do tipo: seções na ordem; marca fica de fora; travessão fora de citação', () => {
@@ -97,4 +102,12 @@ test('linha de comando: notas com --ignorar e descritivos com --executaveis', ()
   assert.equal(rodar(['descritivos', '--executaveis', join(dir, 'rotina.md')], { escrever }), 1);
   assert.match(linhas.at(-1), /falta a tag <papel>/);
   assert.equal(rodar(['nada'], { escrever }), 2);
+});
+
+test('linha de comando: chamada por atalho (symlink) confere de verdade', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'conferir-atalho-'));
+  symlinkSync(fileURLToPath(new URL('../ferramentas', import.meta.url)), join(dir, 'ferramentas'));
+  const r = spawnSync(process.execPath, [join(dir, 'ferramentas', 'conferir.mjs'), 'nada'], { encoding: 'utf8' });
+  assert.equal(r.status, 2);
+  assert.match(r.stdout, /uso:/);
 });

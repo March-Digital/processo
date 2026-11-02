@@ -6,7 +6,7 @@
 //   node conferir.mjs notas <pasta> --facetas <facetas.json> [--modelos <pasta>] [--ignorar <caminho>...]
 //
 // Sai com 0 quando está tudo certo e com 1 quando acha problema, com uma linha por problema.
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, existsSync, realpathSync } from 'node:fs';
 import { join, relative, basename, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -90,16 +90,33 @@ export function ligacoes(texto) {
 const LIGACAO = /\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]/g;
 
 /**
- * Ligações que estão dentro do texto, numa frase que diz o porquê. Linha que é só ligação (como
- * "Ligada a: [[a]], [[b]].") não conta: tirando as ligações, sobram menos de três palavras.
- * Emerson, 01/11/2026 (AJ-01f): "Ligação no texto e nota de grupo (Recomendado)".
+ * Parágrafos, itens de lista, linhas de tabela e títulos, cada um numa linha só. Um parágrafo que
+ * quebra em várias linhas conta como um.
+ */
+function unidades(c) {
+  const saida = [];
+  let atual = null;
+  for (const linha of c.split('\n')) {
+    if (/^\s*(>\s*)*$/.test(linha)) { atual = null; continue; }
+    if (atual === null || /^\s*(>\s*)*([-*+]\s|\d+\.\s|\||#)/.test(linha)) { atual = [linha]; saida.push(atual); }
+    else atual.push(linha.replace(/^\s*(>\s*)*/, ''));
+  }
+  return saida.map((u) => u.join(' '));
+}
+
+/**
+ * Ligações que estão dentro do texto, numa frase que diz o porquê. Trecho que é só ligação (como
+ * "Ligada a: [[a]], [[b]].") não conta: tirando as ligações, sobram menos de três palavras. A
+ * cláusula "Ligada a: ..." nunca conta. Emerson, 01/11/2026 (AJ-01f): "Ligação no texto e nota de
+ * grupo (Recomendado)".
  */
 export function ligacoesNoTexto(texto) {
   const saida = [];
-  for (const linha of corpo(texto).split('\n')) {
-    const achadas = [...linha.matchAll(LIGACAO)].map((m) => m[1].trim());
+  for (const trecho of unidades(corpo(texto))) {
+    const semClausula = trecho.replace(/\b(ligada|ligadas) a:\s*(\[\[[^\]]*\]\][,\s]*(e\s+)?)+\.?/gi, ' ');
+    const achadas = [...semClausula.matchAll(LIGACAO)].map((m) => m[1].trim());
     if (!achadas.length) continue;
-    const resto = linha.replace(LIGACAO, ' ').replace(/^[\s>*|-]*(\d+\.)?\s*(ligada a|ligadas a|ver também|veja também|relacionadas?)?\s*:?/i, '');
+    const resto = semClausula.replace(LIGACAO, ' ').replace(/^[\s>*|-]*(\d+\.)?\s*(ver também|veja também|relacionadas?)?\s*:?/i, '');
     if (resto.split(/\s+/).filter((w) => /\p{L}{3,}/u.test(w)).length < 3) continue;
     saida.push(...achadas);
   }
@@ -215,6 +232,7 @@ export function rodar(argv, { escrever = (l) => process.stdout.write(`${l}\n`) }
   return problemas.length ? 1 : 0;
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// realpathSync: chamada por atalho (symlink) também roda, em vez de sair com 0 sem conferir nada.
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
   process.exitCode = rodar(process.argv.slice(2));
 }
