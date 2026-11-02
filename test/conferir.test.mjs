@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, readFileSync, symlinkSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { conferirDescritivo, conferirNotas, lerCabecalho, ligacoes, rodar, SECOES, TAGS } from '../ferramentas/conferir.mjs';
+import { conferirDescritivo, conferirNotas, lerCabecalho, ligacoes, ligacoesNoTexto, temTravessao, rodar, SECOES, TAGS } from '../ferramentas/conferir.mjs';
 
 const secoes = (comTags = false) => SECOES.map((s, i) => `## ${s}\n\n${comTags ? `<${TAGS[i]}>\ntexto\n</${TAGS[i]}>` : 'texto'}\n`).join('\n');
 
@@ -40,21 +42,52 @@ const FAC = { tipo: ['analise', 'oferta'], area: ['seo', 'comercial'], estado: [
 const nota = (caminho, cab, corpoTexto = '') => ({ caminho, texto: `---\n${cab}\n---\n# T\n${corpoTexto}\n` });
 const ok = 'tipo: analise\narea: seo\nestado: validado\norigem: interna';
 
-test('notas: facetas e ligação de ida ou de volta', () => {
-  const notas = [nota('a.md', ok, 'Ver [[b]].'), nota('b.md', ok), nota('c.md', ok, 'Ver [[inexistente]].')];
-  assert.deepEqual(conferirNotas(notas, FAC), [{ arquivo: 'c.md', problema: 'nota solta: nenhuma ligação de ida nem de volta' }]);
-  const ruins = [nota('d.md', 'tipo: analise\narea: marketing\nestado: validado\norigem: ', 'Ver [[d]].'), { caminho: 'e.md', texto: '# sem cabeçalho [[d]]' }];
-  assert.deepEqual(conferirNotas(ruins, FAC).map((p) => p.problema),
-    ['"area: marketing" fora da lista', 'faceta "origem" vazia', 'sem cabeçalho YAML']); // d recebe a ligação de e
+const ida = (x) => `Os números de [[${x}]] mostram o mesmo padrão.`;
+
+test('notas: facetas e ligação de ida e de volta, dentro do texto', () => {
+  const notas = [nota('a.md', ok, ida('b')), nota('b.md', ok, ida('a')), nota('c.md', ok, ida('inexistente'))];
+  assert.deepEqual(conferirNotas(notas, FAC), [
+    { arquivo: 'c.md', problema: 'sem ligação no texto para outra nota' },
+    { arquivo: 'c.md', problema: 'nenhuma nota liga para esta no texto' },
+  ]);
+  const ruins = [nota('d.md', 'tipo: analise\narea: marketing\nestado: validado\norigem: ', ida('g')), nota('g.md', ok, ida('d'))];
+  assert.deepEqual(conferirNotas(ruins, FAC).map((p) => p.problema), ['"area: marketing" fora da lista', 'faceta "origem" vazia']);
+  assert.equal(conferirNotas([{ caminho: 'e.md', texto: '# sem cabeçalho' }], FAC)[0].problema, 'sem cabeçalho YAML');
   // Ligação só para si mesma não conta.
-  assert.equal(conferirNotas([nota('f.md', ok, '[[f]]')], FAC)[0].problema, 'nota solta: nenhuma ligação de ida nem de volta');
+  assert.equal(conferirNotas([nota('f.md', ok, ida('f'))], FAC)[0].problema, 'sem ligação no texto para outra nota');
+});
+
+test('ligação no texto: linha só de ligações não conta; frase com o porquê conta', () => {
+  assert.deepEqual(ligacoesNoTexto('> Veio de x. Ligada a: [[a]], [[b]].'), []); // a linha automática do AJ-01c
+  assert.deepEqual(ligacoesNoTexto('Ligada a: [[a]], [[b]].'), []);
+  assert.deepEqual(ligacoesNoTexto('- [[a]]'), []);
+  assert.deepEqual(ligacoesNoTexto('1. [[a]]: o tom de cada peça.'), ['a']);
+  assert.deepEqual(ligacoesNoTexto('```\nO tom vem de [[a]] sempre.\n```'), []);
+  assert.deepEqual(ligacoesNoTexto('Para quem gera leads e tem vendedor\n(ver [[dna]]).'), ['dna']); // parágrafo quebrado
+  assert.deepEqual(ligacoesNoTexto('> Veio de `x/y.md` em 01/11/2026. Caminhos entre crases são do x. Ligada a: [[a]], [[b]].'), []);
+  assert.deepEqual(ligacoesNoTexto('- [[a]]\n- [[b]]'), []);
+});
+
+test('modelo do tipo: seções na ordem; marca fica de fora; travessão fora de citação', () => {
+  const modelos = { analise: ['Resposta', 'Fontes'], marca: [] };
+  const fac = { ...FAC, tipo: [...FAC.tipo, 'marca'], area: [...FAC.area, 'marca'] };
+  const a = nota('a.md', ok, `## Resposta\n\n${ida('b')}\n\n## Fontes\n\nA fala de [[m]] dá o tom do texto.`);
+  const b = nota('b.md', ok, `## Fontes\n\n${ida('a')}\n\n## Resposta\n\nx — y`);
+  const m = nota('m.md', 'tipo: marca\narea: marca\nestado: validado\norigem: interna', `${ida('a')} Fala — livre.`);
+  assert.deepEqual(conferirNotas([a, b, m], fac, { modelos }).map((p) => `${p.arquivo}: ${p.problema}`), [
+    'b.md: seções fora da ordem do modelo de analise',
+    'b.md: travessão no texto',
+  ]);
+  const c = nota('c.md', 'tipo: ideia\narea: seo\nestado: ideia\norigem: interna', ida('a'));
+  assert.match(conferirNotas([a, c], FAC, { modelos }).at(-1).problema, /sem modelo para o tipo "ideia"/);
+  assert.equal(temTravessao('Ele disse "ou de igual ←——→ para igual?" e `a — b`.'), false);
 });
 
 test('linha de comando: notas com --ignorar e descritivos com --executaveis', () => {
   const dir = mkdtempSync(join(tmpdir(), 'conferir-'));
   mkdirSync(join(dir, 'modelos'));
-  writeFileSync(join(dir, 'a.md'), nota('a.md', ok, '[[b]]').texto);
-  writeFileSync(join(dir, 'b.md'), nota('b.md', ok).texto);
+  writeFileSync(join(dir, 'a.md'), nota('a.md', ok, ida('b')).texto);
+  writeFileSync(join(dir, 'b.md'), nota('b.md', ok, ida('a')).texto);
   writeFileSync(join(dir, 'README.md'), '# Sem cabeçalho');
   writeFileSync(join(dir, 'modelos', 'nota.md'), '# modelo');
   writeFileSync(join(dir, 'facetas.json'), JSON.stringify(FAC));
@@ -62,8 +95,19 @@ test('linha de comando: notas com --ignorar e descritivos com --executaveis', ()
   const escrever = (l) => linhas.push(l);
   assert.equal(rodar(['notas', dir, '--facetas', join(dir, 'facetas.json'), '--ignorar', 'README.md', 'modelos'], { escrever }), 0);
   assert.equal(rodar(['notas', dir, '--facetas', join(dir, 'facetas.json')], { escrever }), 1);
+  writeFileSync(join(dir, 'modelos', 'analise.md'), '# Modelo\n\n## Resposta\n');
+  assert.equal(rodar(['notas', dir, '--facetas', join(dir, 'facetas.json'), '--modelos', join(dir, 'modelos'), '--ignorar', 'README.md', 'modelos'], { escrever }), 1);
+  assert.match(linhas.at(-1), /falta a seção "## Resposta" do modelo de analise/);
   writeFileSync(join(dir, 'rotina.md'), `# R\n${secoes()}`);
   assert.equal(rodar(['descritivos', '--executaveis', join(dir, 'rotina.md')], { escrever }), 1);
   assert.match(linhas.at(-1), /falta a tag <papel>/);
   assert.equal(rodar(['nada'], { escrever }), 2);
+});
+
+test('linha de comando: chamada por atalho (symlink) confere de verdade', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'conferir-atalho-'));
+  symlinkSync(fileURLToPath(new URL('../ferramentas', import.meta.url)), join(dir, 'ferramentas'));
+  const r = spawnSync(process.execPath, [join(dir, 'ferramentas', 'conferir.mjs'), 'nada'], { encoding: 'utf8' });
+  assert.equal(r.status, 2);
+  assert.match(r.stdout, /uso:/);
 });
