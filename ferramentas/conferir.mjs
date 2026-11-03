@@ -2,7 +2,7 @@
 // Conferência dos descritivos e das notas da March (AJ-01 do Plano do motor; modelo em
 // modelos/descritivo.md). Sem dependência: só Node 20 ou mais novo.
 //
-//   node conferir.mjs descritivos <arquivo ou pasta>... [--executaveis <arquivo ou pasta>...]
+//   node conferir.mjs descritivos <arquivo ou pasta>... [--executaveis <arquivo ou pasta>...] [--cerebro <pasta>]
 //   node conferir.mjs notas <pasta> --facetas <facetas.json> [--modelos <pasta>] [--ignorar <caminho>...]
 //
 // Sai com 0 quando está tudo certo e com 1 quando acha problema, com uma linha por problema.
@@ -59,6 +59,15 @@ export function conferirDescritivo(texto, { executavel = false } = {}) {
     }
   }
   return problemas;
+}
+
+/**
+ * Notas do cérebro que um descritivo cita pelo caminho `../cerebro/<caminho>`, fora de bloco de
+ * código. ADR 0005 do `cerebro` (AJ-06): o agente cita em "Fontes" as notas que lê, e a conferência
+ * acusa a que não existe.
+ */
+export function citacoesDoCerebro(texto) {
+  return [...new Set([...corpo(texto).matchAll(/\.\.\/cerebro\/([^\s`'"()<>\[\]]+)/g)].map((m) => m[1].replace(/[.,;:!?]+$/, '')))];
 }
 
 /** Cabeçalho YAML simples: `chave: valor`, `chave: [a, b]` ou lista com `- item`. */
@@ -198,9 +207,16 @@ export function rodar(argv, { escrever = (l) => process.stdout.write(`${l}\n`) }
   if (modo === 'descritivos') {
     const executaveis = new Set(arquivosMd(g.executaveis ?? []).map((p) => resolve(p)));
     const todos = [...new Set([...arquivosMd(g._), ...executaveis].map((p) => resolve(p)))];
+    const cerebro = g.cerebro?.[0];
     for (const p of todos) {
-      for (const x of conferirDescritivo(readFileSync(p, 'utf8'), { executavel: executaveis.has(p) })) {
+      const texto = readFileSync(p, 'utf8');
+      for (const x of conferirDescritivo(texto, { executavel: executaveis.has(p) })) {
         problemas.push(`${relative(process.cwd(), p)}: ${x}`);
+      }
+      if (cerebro) {
+        for (const c of citacoesDoCerebro(texto)) {
+          if (!existsSync(join(cerebro, c))) problemas.push(`${relative(process.cwd(), p)}: cita ../cerebro/${c}, que não existe`);
+        }
       }
     }
     escrever(problemas.length ? problemas.join('\n') : `ok: ${todos.length} descritivos nas sete seções`);

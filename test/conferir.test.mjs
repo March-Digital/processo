@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { conferirDescritivo, conferirNotas, lerCabecalho, ligacoes, ligacoesNoTexto, temTravessao, rodar, SECOES, TAGS } from '../ferramentas/conferir.mjs';
+import { citacoesDoCerebro, conferirDescritivo, conferirNotas, lerCabecalho, ligacoes, ligacoesNoTexto, temTravessao, rodar, SECOES, TAGS } from '../ferramentas/conferir.mjs';
 
 const secoes = (comTags = false) => SECOES.map((s, i) => `## ${s}\n\n${comTags ? `<${TAGS[i]}>\ntexto\n</${TAGS[i]}>` : 'texto'}\n`).join('\n');
 
@@ -102,6 +102,24 @@ test('linha de comando: notas com --ignorar e descritivos com --executaveis', ()
   assert.equal(rodar(['descritivos', '--executaveis', join(dir, 'rotina.md')], { escrever }), 1);
   assert.match(linhas.at(-1), /falta a tag <papel>/);
   assert.equal(rodar(['nada'], { escrever }), 2);
+});
+
+test('citações do cérebro: caminho com ou sem crase, pasta, pontuação no fim; nada em bloco de código', () => {
+  const texto = '1. `../cerebro/marca/dna.md`: a marca.\n2. Pasta ../cerebro/comercial/voz-do-cliente/, e ../cerebro/marca/voz.md.\n```\n../cerebro/fora.md\n```\n';
+  assert.deepEqual(citacoesDoCerebro(texto), ['marca/dna.md', 'comercial/voz-do-cliente/', 'marca/voz.md']);
+});
+
+test('linha de comando: descritivos com --cerebro acusam nota citada que não existe', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'conferir-cerebro-'));
+  mkdirSync(join(dir, 'cerebro', 'marca'), { recursive: true });
+  writeFileSync(join(dir, 'cerebro', 'marca', 'dna.md'), '# DNA');
+  writeFileSync(join(dir, 'agente.md'), `# A\n${secoes()}\nLeia \`../cerebro/marca/dna.md\` e \`../cerebro/marca/sumiu.md\`.\n`);
+  const linhas = [];
+  const escrever = (l) => linhas.push(l);
+  assert.equal(rodar(['descritivos', join(dir, 'agente.md')], { escrever }), 0);
+  assert.equal(rodar(['descritivos', join(dir, 'agente.md'), '--cerebro', join(dir, 'cerebro')], { escrever }), 1);
+  assert.match(linhas.at(-1), /cita \.\.\/cerebro\/marca\/sumiu\.md, que não existe/);
+  assert.doesNotMatch(linhas.at(-1), /dna/);
 });
 
 test('linha de comando: chamada por atalho (symlink) confere de verdade', () => {
