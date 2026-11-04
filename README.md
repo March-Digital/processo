@@ -17,14 +17,14 @@ ferramenta, `ferramentas/conferir.mjs`.
   método.
 - No teste de cada repositório, que chama a conferência.
 - Não use para as regras do processo nem para o ambiente de trabalho: saíram daqui em 30/10/2026
-  (D2 do PRD do motor, P2-03).
+  (D2 do PRD do motor, P2-03); o ambiente está no cérebro desde 04/11/2026.
 
 ## Fontes
 
 1. **Regras do processo:** [`cerebro/operacao/processo.md`](https://github.com/March-Digital/cerebro/blob/main/operacao/processo.md).
    É a fonte única; o `CLAUDE.md` de cada projeto importa a nota.
-2. **Ambiente de trabalho:** [`motor/scripts/ambiente.sh`](https://github.com/March-Digital/motor/blob/main/scripts/ambiente.sh)
-   e o guia [`ambiente.md`](https://github.com/March-Digital/motor/blob/main/scripts/ambiente.md).
+2. **Ambiente de trabalho:** `cerebro/ferramentas/ambiente.sh` e o guia `ambiente.md`, ao lado,
+   no repositório privado `March-Digital/cerebro`.
 3. O que tem aqui:
 
 | Arquivo | Uso |
