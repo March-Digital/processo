@@ -31,6 +31,7 @@ ferramenta, `ferramentas/conferir.mjs`.
 | --- | --- |
 | [`modelos/`](modelos/) | Copiar para `docs/` do projeto novo: PRD, TRD, Schema, App Flow, Brief de Design, Plano e o modelo de ADR |
 | [`CLAUDE.md`](CLAUDE.md) | Copiar para a raiz do projeto novo e preencher "Neste projeto" |
+| [`modelos/ci.yml`](modelos/ci.yml) | Copiar para `.github/workflows/ci.yml` do projeto e trocar cada `<...>`: o padrão "CI por PR, deploy por merge" (regra 15 do processo): o PR roda tudo, a imagem se constrói uma vez com cache no GHCR e a `main` só põe a tag e implanta |
 | [`modelos/descritivo.md`](modelos/descritivo.md) | Modelo de todo descritivo lido por agente: README, CLAUDE.md, rotina, agente, skill, regra e método. Sete seções; o trecho executável em tags XML |
 | [`ferramentas/conferir.mjs`](ferramentas/conferir.mjs) | Conferência sem dependência: `descritivos` (as sete seções e as tags e, com `--cerebro <pasta>`, toda nota citada como `../cerebro/<caminho>` existe) e `notas` (as quatro facetas, a ligação de ida e de volta dentro do texto e, com `--modelos`, as seções do modelo de cada tipo e nenhum travessão). Cada repositório chama no próprio teste. `npm test` testa a conferência |
 
@@ -39,11 +40,13 @@ ferramenta, `ferramentas/conferir.mjs`.
 1. Projeto novo: copie [`modelos/`](modelos/) para `docs/` do projeto.
 2. Copie o [`CLAUDE.md`](CLAUDE.md) para a raiz do projeto novo e preencha cada "Neste projeto".
 3. Descritivo novo: siga [`modelos/descritivo.md`](modelos/descritivo.md).
-4. No repositório, ponha o processo como dependência de desenvolvimento, presa a um commit:
+4. CI do projeto: copie [`modelos/ci.yml`](modelos/ci.yml) para `.github/workflows/ci.yml`, troque cada
+   `<...>` e confira as versões das actions antes do primeiro run.
+5. No repositório, ponha o processo como dependência de desenvolvimento, presa a um commit:
    `"processo": "https://codeload.github.com/March-Digital/processo/tar.gz/<commit>"`. O
    repositório é público, então o `npm ci` baixa sem credencial, até no Docker e no CI.
-5. No `npm test` do repositório, chame `conferir descritivos` e, onde houver notas, `conferir notas`.
-6. Mudou a conferência: rode `npm test` aqui e, depois do merge, troque o commit em cada repositório.
+6. No `npm test` do repositório, chame `conferir descritivos` e, onde houver notas, `conferir notas`.
+7. Mudou a conferência: rode `npm test` aqui e, depois do merge, troque o commit em cada repositório.
 
 ## Saída
 
