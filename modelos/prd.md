@@ -47,9 +47,11 @@ Prioridade: **M** = obrigatório para publicar; **S** = obrigatório para fechar
 
 | ID | Requisito | Prioridade |
 | --- | --- | --- |
-| RF-01 | [O sistema faz X para Y.] | M |
+| RF-01 | [Quando X, o sistema faz Y para Z.] | M |
 
-[IDs por área em dezenas (RF-01–09, RF-10–19…) para caber requisitos novos sem renumerar.]
+[IDs por área em dezenas (RF-01–09, RF-10–19…) para caber requisitos novos sem renumerar. A frase
+diz o gatilho e o comportamento ("Quando o lead envia o formulário, o sistema grava o contato e
+responde em até 2 s"), para que o teste do RF saia dela.]
 
 ## 6. Métricas de sucesso
 

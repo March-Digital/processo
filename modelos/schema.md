@@ -63,3 +63,17 @@ Base: `[URL]`. Formato de erro: `[formato]`.
 ## 8. Migrações
 
 [Ferramenta, pasta, usuários do banco.]
+
+## 9. Onde o contrato mora no código
+
+Regra 16 do processo: um módulo de contratos por serviço, validação na borda, campo desconhecido é
+erro, `versao` em tudo que outro código lê depois.
+
+| Contrato | Módulo | Validado em | `versao` |
+| --- | --- | --- | --- |
+| [Carga de entrada do `POST /caminho`] | `[pacote/contratos.py]` | Borda HTTP | não se aplica |
+| [Arquivo ou tabela que outro código lê depois] | `[pacote/contratos.py]` | Ao ler e ao gravar | `1` |
+
+**Compatibilidade:** versão antiga continua legível; versão futura é recusada com erro claro; mudar
+um contrato gravado exige o teste de compatibilidade no mesmo PR (ler um exemplo de cada versão
+anterior).

@@ -42,6 +42,17 @@ stateDiagram-v2
     [*] --> Estado1
 ```
 
+**Estados** (regra 18 do processo, para rotina ou pipeline com mais de uma etapa)
+
+| Estado | Significado | Ação |
+| --- | --- | --- |
+| `[estado]` | [O que já foi feito] | [O que o sistema ou a pessoa faz a partir dele] |
+| `erro` | Falha técnica ou contrato inválido | Corrigir a causa e `retomar` |
+
+**Caminho de falha:** a rotina cai na etapa [N]; o estado e o hash gravados até ali ficam;
+`retomar` continua da etapa [N] sem refazer as anteriores. Aval guarda o hash do aprovado; o que
+mudou depois do aval volta para `[estado da fila]`.
+
 ## 5. Pontos em aberto
 
 - [ ] [Pergunta.]

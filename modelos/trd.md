@@ -23,6 +23,14 @@
 | --- | --- | --- | --- |
 | [Componente] | [Onde] | [O que faz] | RF-xx |
 
+**Domínio e bordas** (regra 16 do processo)
+
+| Módulo | Papel | Importa framework? |
+| --- | --- | --- |
+| `[pacote/dominio]` | Regra de negócio | Não: um teste barra |
+| `[pacote/contratos]` | Modelos de entrada e saída; campo desconhecido é erro | Só a biblioteca de validação |
+| `[pacote/adaptadores/...]` | HTTP, banco, arquivo, fila, MCP, clientes de API | Sim |
+
 **Caminho principal**
 
 1. [Passo a passo do fluxo mais importante, do início ao fim.]
@@ -42,15 +50,26 @@
 
 [Comportamento: validação, idempotência, fila, integrações. Contratos ficam no Schema.]
 
+**Rotinas com mais de uma etapa** (regra 18 do processo): cada etapa grava o estado e o hash SHA-256
+do que produziu; `[comando] retomar` continua do último estado sem refazer o que já foi feito e
+recusa artefato cujo hash mudou. A tabela de estados e o caminho de falha estão no App Flow.
+
 ## 6. [Integrações e rastreamento, quando houver]
 
 [Eventos, destinos, normas de envio.]
 
 ## 7. Segurança
 
+O mínimo de todo serviço com interface de rede (regra 19 do processo), cada um com teste de ponta a
+ponta na seção 10:
+
 | Controle | Detalhe |
 | --- | --- |
-| [Controle] | [Como] |
+| Escuta | Só loopback por padrão; interface externa só por variável de ambiente explícita |
+| Autenticação | Toda interface externa exige [método]; sem exceção para leitura |
+| `Host` e `Origin` | Só os valores da lista; o resto recebe 4xx |
+| HTTPS | Só pelo proxy ([Caddy]); o serviço nunca expõe TLS próprio |
+| [Controle do projeto] | [Como] |
 
 ## 8. Infraestrutura e deploy
 
@@ -65,8 +84,15 @@
 ## 10. Testes
 
 Playwright para tudo o que passa pelo navegador; testes de unidade para regras do back-end. Rodam na
-máquina, no CI em todo push e PR (barram o deploy) e, o conjunto de fumaça, depois de cada deploy e
+máquina, no CI em todo PR (barram o merge, regra 15) e, o conjunto de fumaça, depois de cada deploy e
 como monitor sintético.
+
+**Python** (regra 15): `ruff check`, `ruff format --check` e `mypy --strict` dentro do `npm test`,
+configurados no `pyproject.toml` (regras `E, F, I, UP, B, SIM`, linha 100). Marcadores do `pytest`:
+`externo` para o que chama serviço pago ou externo; `integracao` para o que exige banco de verdade;
+o padrão roda sem os dois (`-m "not externo and not integracao"`). O gancho de commit
+(`.githooks/pre-commit`, modelo no `processo`) roda gitleaks, descritivos, lint e unidade em menos
+de 30 segundos.
 
 | Conjunto | O que verifica | RF / RNF |
 | --- | --- | --- |
@@ -77,6 +103,9 @@ como monitor sintético.
 | Acessibilidade | `axe` sem violações A e AA; navegação só com teclado | RNF-xx |
 | Visual | Capturas de celular e computador comparadas às de referência do Brief de Design | RF-xx |
 | Fumaça | [Caminho mínimo que prova que o sistema está vivo] | RF-xx |
+| Bordas | Entrada com campo desconhecido é recusada; arquivo com `versao` futura é recusado; domínio não importa framework | RNF-xx |
+| Rede | Os 4 controles da seção 7: loopback, autenticação, `Host` e `Origin`, HTTPS só pelo proxy | RNF-xx |
+| Retomada, quando houver rotina | `retomar` não refaz etapa feita e recusa hash que mudou | RF-xx |
 
 **Navegadores:** Chromium, WebKit e Firefox; perfis de celular e computador.
 
