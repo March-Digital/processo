@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { citacoesDoCerebro, conferirDescritivo, conferirNotas, lerCabecalho, ligacoes, ligacoesNoTexto, temTravessao, rodar, SECOES, TAGS } from '../ferramentas/conferir.mjs';
+import { citacoesDoCerebro, conferirDescritivo, conferirNotas, conferirPerguntas, dadoSensivel, lerCabecalho, lerFonte, ligacoes, ligacoesNoTexto, numerosSemNatureza, perguntarAoAgente, temTravessao, textoDoModelo, rodar, SECOES, TAGS } from '../ferramentas/conferir.mjs';
 
 const secoes = (comTags = false) => SECOES.map((s, i) => `## ${s}\n\n${comTags ? `<${TAGS[i]}>\ntexto\n</${TAGS[i]}>` : 'texto'}\n`).join('\n');
 
@@ -128,4 +128,117 @@ test('linha de comando: chamada por atalho (symlink) confere de verdade', () => 
   const r = spawnSync(process.execPath, [join(dir, 'ferramentas', 'conferir.mjs'), 'nada'], { encoding: 'utf8' });
   assert.equal(r.status, 2);
   assert.match(r.stdout, /uso:/);
+});
+
+// ADR 0017 do cérebro: a organização do EIP do CPQD.
+const FAC17 = { ...FAC, acesso: ['publico', 'equipe'], fonte: ['decisao', 'dado', 'documento', 'mercado', 'concorrente'] };
+const ok17 = `${ok}\nacesso: equipe\nfontes:\n  - 'F1 | decisao | 2026-11-18 | Emerson, 18/11/2026: "todas as 10"'`;
+const problemas17 = (notas, opcoes) => conferirNotas(notas, FAC17, opcoes).map((p) => `${p.arquivo}: ${p.problema}`);
+
+test('C7 e C1: acesso vira faceta; fontes com tipo, data e link; citação existe', () => {
+  assert.deepEqual(problemas17([nota('a.md', ok17, ida('b')), nota('b.md', ok17, ida('a'))]), []);
+  const semAcesso = ok17.replace('acesso: equipe\n', '');
+  assert.deepEqual(problemas17([nota('a.md', semAcesso, ida('b')), nota('b.md', ok17, ida('a'))]), ['a.md: faceta "acesso" vazia']);
+  const ruim = `${ok}\nacesso: equipe\nfonte: 'antiga'\nfontes:\n  - 'F1 | dado | 2026-13-01 | Planejador'\n  - 'X | blog | 2026-11-01 |  | '`;
+  assert.deepEqual(problemas17([nota('a.md', ruim, `${ida('b')} O volume [F3] cresceu.`), nota('b.md', ok17, ida('a'))]), [
+    'a.md: cabeçalho "fonte:" saiu: use a lista "fontes:"',
+    'a.md: fonte F1: data "2026-13-01" não é AAAA-MM-DD',
+    'a.md: fonte F1: sem link com localizador (só a do tipo decisao dispensa)',
+    'a.md: fonte "X | blog | 2026-11-01 |  | " sem id F<n> no começo',
+    'a.md: fonte X: tipo "blog" fora da lista (decisao, dado, documento, mercado, concorrente)',
+    'a.md: fonte X: sem título',
+    'a.md: fonte X: sem link com localizador (só a do tipo decisao dispensa)',
+    'a.md: cita [F3], que não está em "fontes:"',
+    'a.md: fonte F1 não é citada no texto',
+  ]);
+  const dado = `${ok17}\n  - 'F2 | dado | 2026-10-15 | Planejador de palavras-chave | https://ads.google.com (aba Ideias, linha 4)'`;
+  assert.deepEqual(problemas17([nota('a.md', dado, `${ida('b')} O volume [F2] é medido.`), nota('b.md', ok17, ida('a'))]), []);
+  assert.deepEqual(lerFonte('F2 | dado | 2026-10-15 | T | https://x.com/a?b=1 | p. 3', FAC17.fonte).link, 'https://x.com/a?b=1 | p. 3');
+});
+
+test('C2: número em análise, oferta e modelo de negócio diz a natureza; na tabela basta o cabeçalho', () => {
+  const t = 'Cresceu 26% no mês.\n\nO CPC medido foi R$ 14,90.\n\n| Termo | CPC (R$) |\n| --- | --- |\n| crm | R$ 12 |\n\n| Termo | CPC medido (R$) |\n| --- | --- |\n| crm | R$ 12 |\n\n- Meta esperada de 30% em 3 meses.';
+  assert.deepEqual(numerosSemNatureza(t), ['| crm | R$ 12 |', 'Cresceu 26% no mês.']);
+  const metodo = 'tipo: metodo\narea: seo\nestado: validado\norigem: interna';
+  const fac = { ...FAC, tipo: [...FAC.tipo, 'metodo'] };
+  assert.deepEqual(conferirNotas([nota('a.md', metodo, `${ida('b')} Cresceu 26%.`), nota('b.md', ok, `${ida('a')} Caiu 3% no mês.`)], fac).map((p) => p.arquivo), ['b.md']);
+});
+
+test('C4: substitui e substituida_por nos dois sentidos, a antiga arquivada', () => {
+  const nova = `${ok}\nsubstitui: velha`;
+  const velha = 'tipo: analise\narea: seo\nestado: arquivado\norigem: interna\nsubstituida_por: nova';
+  const facA = { ...FAC, estado: [...FAC.estado, 'arquivado'] };
+  assert.deepEqual(conferirNotas([nota('nova.md', nova, ida('velha')), nota('velha.md', velha, ida('nova'))], facA), []);
+  const velhaViva = velha.replace('arquivado', 'validado').replace('\nsubstituida_por: nova', '');
+  assert.deepEqual(conferirNotas([nota('nova.md', nova, ida('velha')), nota('velha.md', velhaViva, ida('nova'))], facA).map((p) => p.problema), [
+    'substitui "velha", mas ela não diz "substituida_por: nova"',
+    'substitui "velha", que não está arquivada',
+  ]);
+  assert.match(conferirNotas([nota('a.md', `${ok}\nsubstitui: sumiu`, ida('b')), nota('b.md', ok, ida('a'))], FAC)[0].problema, /substitui "sumiu", que não existe/);
+});
+
+test('C6: dado sensível, domínio permitido, valor de cliente anônimo e lista de clientes', () => {
+  const t = 'Fale com joao@cliente.com.br ou (11) 91234-5678; CPF 123.456.789-09, CNPJ 12.345.678/0001-90, CEP 13083-970. Time: contato@marchdigital.com.br. Id 2436688770.';
+  assert.deepEqual(dadoSensivel(t, { emailsPermitidos: ['marchdigital.com.br'] }), [
+    'dado sensível (e-mail): "joao@cliente.com.br"',
+    'dado sensível (telefone): "(11) 91234-5678"',
+    'dado sensível (CPF): "123.456.789-09"',
+    'dado sensível (CNPJ): "12.345.678/0001-90"',
+    'dado sensível (CEP): "13083-970"',
+  ]);
+  assert.deepEqual(dadoSensivel('---\norigem: x\n---\nA Black Grill faturou R$ 10 mil.', { origem: ['cliente-anonimo'], clientes: ['Black Grill', 'Gri'] }), [
+    'valor em reais em nota de cliente anônimo',
+    'nome de cliente: "Black Grill"',
+  ]);
+  assert.deepEqual(dadoSensivel('O grill da praça.', { clientes: ['Grill'] }), ['nome de cliente: "Grill"']);
+  assert.deepEqual(dadoSensivel('Os grills da praça.', { clientes: ['Grill'] }), []);
+});
+
+test('C10: comentário ou texto do modelo que sobrou na nota', () => {
+  const modelo = '---\ntipo: analise\n---\n# T\n\n## Resposta\n\n<!--\nA conclusão em até três frases, com o número que a sustenta.\n-->\n';
+  assert.deepEqual(textoDoModelo(modelo), ['A conclusão em até três frases, com o número que a sustenta.']);
+  const textosModelo = { analise: textoDoModelo(modelo) };
+  const sobrou = `${ida('b')}\n\nA conclusão em até três frases, com o número que a sustenta.\n\n<!-- falta -->`;
+  assert.deepEqual(conferirNotas([nota('a.md', ok, sobrou), nota('b.md', ok, ida('a'))], FAC, { textosModelo }).map((p) => p.problema), [
+    'comentário de modelo (<!-- -->) sobrou na nota',
+    'texto do modelo sobrou: "A conclusão em até três frases, com o número que a sustenta."',
+  ]);
+});
+
+test('C5: perguntas de conferência, versão, contrato, fato e proibido; agente com executor falso', () => {
+  const notas = [nota('comercial/oferta.md', ok, 'O Diagnóstico custa **R$ 2.500**, à vista.'), nota('velha.md', 'estado: arquivado', 'custa R$ 1.900')];
+  const conf = { versao: 1, perguntas: [{ id: 'P01', pergunta: 'Quanto custa?', nota: 'comercial/oferta.md', fatos: ['R$ 2.500'], proibidos: ['R$ 1.900'] }] };
+  assert.deepEqual(conferirPerguntas(conf, notas), []);
+  assert.deepEqual(conferirPerguntas({ versao: 2, perguntas: [] }, notas), ['conferencia.json: versão 2 não é a 1 que esta conferência lê']);
+  const ruim = { versao: 1, perguntas: [
+    { id: 'P01', pergunta: 'Q', nota: 'comercial/oferta.md', fatos: ['R$ 3.000'], proibidos: ['à vista'], extra: 1 },
+    { id: 'P01', pergunta: 'Q', nota: 'sumiu.md', fatos: ['x'] },
+  ] };
+  assert.deepEqual(conferirPerguntas(ruim, notas), [
+    'P01: campo que o contrato não conhece: extra',
+    'P01: comercial/oferta.md não diz "R$ 3.000"',
+    'P01: comercial/oferta.md diz o proibido "à vista"',
+    'P01: id repetido',
+    'P01: a nota sumiu.md não existe',
+  ]);
+  const executar = () => ({ status: 0, stdout: 'Custa R$ 2.500 (comercial/oferta.md).' });
+  assert.deepEqual(perguntarAoAgente(conf, '.', { executar }), []);
+  assert.deepEqual(perguntarAoAgente(conf, '.', { executar: () => ({ status: 0, stdout: 'Custa R$ 1.900.' }) }), ['P01: a resposta não traz "R$ 2.500"', 'P01: a resposta traz o proibido "R$ 1.900"']);
+});
+
+test('linha de comando: perguntas e lista de clientes fora do Git', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'conferir-17-'));
+  writeFileSync(join(dir, 'a.md'), nota('a.md', ok, `${ida('b')} O Diagnóstico custa R$ 2.500 esperado.`).texto);
+  writeFileSync(join(dir, 'b.md'), nota('b.md', ok, `${ida('a')} Atendemos a Padaria Sol.`).texto);
+  writeFileSync(join(dir, 'facetas.json'), JSON.stringify(FAC));
+  writeFileSync(join(dir, 'conferencia.json'), JSON.stringify({ versao: 1, perguntas: [{ id: 'P01', pergunta: 'Quanto?', nota: 'a.md', fatos: ['R$ 2.500'] }] }));
+  writeFileSync(join(dir, 'clientes.txt'), '# um por linha\nPadaria Sol\n');
+  const linhas = [];
+  const escrever = (l) => linhas.push(l);
+  assert.equal(rodar(['perguntas', join(dir, 'conferencia.json'), '--cerebro', dir], { escrever }), 0);
+  assert.match(linhas.at(-1), /ok: 1 perguntas/);
+  assert.equal(rodar(['notas', dir, '--facetas', join(dir, 'facetas.json'), '--ignorar', 'clientes.txt', '--clientes', join(dir, 'sem-arquivo.txt')], { escrever }), 0);
+  assert.equal(rodar(['notas', dir, '--facetas', join(dir, 'facetas.json'), '--clientes', join(dir, 'clientes.txt')], { escrever }), 1);
+  assert.match(linhas.at(-1), /b\.md: nome de cliente: "Padaria Sol"/);
+  assert.equal(rodar(['perguntas'], { escrever }), 2);
 });
