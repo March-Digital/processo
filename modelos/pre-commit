@@ -1,0 +1,30 @@
+#!/bin/sh
+# Modelo do gancho de commit da March (regra 15 do processo, D3 do ADR 0016 do cérebro). Copie para
+# .githooks/pre-commit do projeto, dê permissão de execução e ligue pelo `prepare` do package.json:
+#   "prepare": "git config core.hooksPath .githooks"
+# O gancho roda o que leva menos de 30 segundos: o gitleaks sobre o que vai entrar no commit e o script
+# `gancho` do package.json, que o projeto define com descritivos, lint e unidade. Exemplos:
+#   Node:   "gancho": "npm run --silent descritivos && npm run --silent lint && node --test api/test"
+#   Python: "gancho": "npm run --silent descritivos && uv run ruff check . && uv run ruff format --check . && uv run pytest -q -m 'not externo and not integracao'"
+# Nunca `git commit --no-verify`: gancho que barra é proteção. O que leva mais de 30 segundos fica para o CI.
+set -eu
+
+IMAGEM="ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
+RAIZ="$(git rev-parse --show-toplevel)"
+cd "$RAIZ"
+
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --staged --redact --no-banner "$RAIZ"
+elif command -v docker >/dev/null 2>&1; then
+  docker run --rm -v "$RAIZ:/repo" -w /repo "$IMAGEM" git --staged --redact --no-banner /repo
+else
+  echo "Commit barrado: instale o gitleaks ou o Docker para a varredura de segredo." >&2
+  exit 1
+fi
+
+if [ -f package.json ] && node -e 'process.exit(require("./package.json").scripts?.gancho ? 0 : 1)'; then
+  npm run --silent gancho
+else
+  echo "Commit barrado: defina o script \"gancho\" no package.json (descritivos, lint e unidade)." >&2
+  exit 1
+fi
