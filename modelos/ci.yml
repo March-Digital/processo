@@ -15,7 +15,8 @@
 #    precisa de ambiente próprio.
 # 5. Commit só de documento não abre execução: filtro por caminho igual em push e pull_request. O que o
 #    teste confere (os descritivos, pelo `conferir`) fica fora do filtro. As listas mudam juntas.
-# 6. Bateria pesada (todos os perfis, visual, Lighthouse) roda uma vez por dia e à mão, nunca no PR.
+# 6. Bateria pesada (todos os perfis, visual, Lighthouse) roda uma vez por semana e à mão, nunca no PR.
+#    No PR, o navegador roda um perfil só (ADR 0084 do site-march).
 #    Paralelismo do Playwright se mede antes de mudar: no site-march, 1 worker venceu 2 e 4 (ADR 0082).
 # 7. Job que depende de job pulado precisa de `if` explícito: sem ele o GitHub pula o job quando qualquer
 #    antecessor, mesmo indireto, foi pulado (o deploy do dados ficou sem rodar em 17/11/2026 por isso).
@@ -47,7 +48,7 @@ on:
       - "!.githooks/**"
       - "!skills-lock.json"
   schedule:
-    - cron: "30 12 * * *" # 9h30 em Brasília: bateria pesada, se houve commit na main em 24 h
+    - cron: "30 12 * * 1" # segunda, 9h30 em Brasília: bateria pesada, se houve commit na main em 7 dias
   workflow_dispatch:
 
 permissions:
@@ -183,7 +184,7 @@ jobs:
         env:
           VERSAO: t-${{ needs.arvore.outputs.arvore }}
 
-  # Navegador (só em projeto com páginas): no PR, dois perfis; no diário e à mão, todos.
+  # Navegador (só em projeto com páginas): no PR, só o Chrome; no semanal e à mão, todos.
   # playwright.config: fullyParallel: true; retries: 1; sem `workers` até medir (regra 15).
   navegador:
     needs: arvore
@@ -197,13 +198,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: npm ci
         env: { HOME: /root }
-      - run: npx playwright test ${{ github.event_name == 'pull_request' && '--project=chromium --project=iphone' || '' }}
+      - run: npx playwright test ${{ github.event_name == 'pull_request' && '--project=chromium' || '' }}
         env: { HOME: /root }
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with: { name: "playwright-${{ github.run_id }}", path: "playwright-report/\ntest-results/", retention-days: 7 }
 
-  # 5. Bateria pesada só no diário e à mão: visual, Lighthouse (5 corridas por URL), perfis extras.
+  # 6. Bateria pesada só no semanal e à mão: visual, Lighthouse (5 corridas por URL), perfis extras.
   pesados:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
