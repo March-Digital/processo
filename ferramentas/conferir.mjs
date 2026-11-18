@@ -343,7 +343,7 @@ export function conferirNotas(notas, facetas, { modelos, textosModelo, clientes 
     // C6: dado sensível.
     for (const x of dadoSensivel(n.texto, { origem: lista(cab.origem), clientes, emailsPermitidos })) p(x);
     // C10: comentário ou texto do modelo que sobrou.
-    if (/<!--/.test(n.texto.replace(/```[\s\S]*?```/g, ''))) p('comentário de modelo (<!-- -->) sobrou na nota');
+    if (/<!--/.test(n.texto.replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, ''))) p('comentário de modelo (<!-- -->) sobrou na nota');
     for (const l of textosModelo?.[cab.tipo] ?? []) if (n.texto.includes(l)) p(`texto do modelo sobrou: "${l.slice(0, 60)}"`);
   }
   return problemas;

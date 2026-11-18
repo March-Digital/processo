@@ -203,6 +203,7 @@ test('C10: comentário ou texto do modelo que sobrou na nota', () => {
     'comentário de modelo (<!-- -->) sobrou na nota',
     'texto do modelo sobrou: "A conclusão em até três frases, com o número que a sustenta."',
   ]);
+  assert.deepEqual(conferirNotas([nota('a.md', ok, `${ida('b')} A instrução fica em \`<!-- -->\` e sai.`), nota('b.md', ok, ida('a'))], FAC, { textosModelo }), []);
 });
 
 test('C5: perguntas de conferência, versão, contrato, fato e proibido; agente com executor falso', () => {
