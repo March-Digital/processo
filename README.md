@@ -44,7 +44,9 @@ ferramenta, `ferramentas/conferir.mjs`.
 4. CI do projeto: copie [`modelos/ci.yml`](modelos/ci.yml) para `.github/workflows/ci.yml`, troque cada
    `<...>` e confira as versões das actions antes do primeiro run. Gancho de commit: copie
    [`modelos/pre-commit`](modelos/pre-commit) para `.githooks/pre-commit`, defina o script `gancho` no
-   `package.json` e ligue pelo `prepare`.
+   `package.json` e ligue pelo `prepare`: `git rev-parse --git-dir >/dev/null 2>&1 && git config
+   core.hooksPath .githooks || exit 0`. O `npm ci` do Docker e do CI roda fora de um repositório git e o
+   `git config` sozinho barra a instalação (site-march#172).
 5. No repositório, ponha o processo como dependência de desenvolvimento, presa a um commit:
    `"processo": "https://codeload.github.com/March-Digital/processo/tar.gz/<commit>"`. O
    repositório é público, então o `npm ci` baixa sem credencial, até no Docker e no CI.

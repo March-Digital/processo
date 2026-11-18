@@ -1,7 +1,8 @@
 #!/bin/sh
 # Modelo do gancho de commit da March (regra 15 do processo, D3 do ADR 0016 do cérebro). Copie para
-# .githooks/pre-commit do projeto, dê permissão de execução e ligue pelo `prepare` do package.json:
-#   "prepare": "git config core.hooksPath .githooks"
+# .githooks/pre-commit do projeto, dê permissão de execução e ligue pelo `prepare` do package.json, que só
+# mexe no git quando há um repositório (o `npm ci` do Docker e do CI roda fora de um; site-march#172):
+#   "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath .githooks || exit 0"
 # O gancho roda o que leva menos de 30 segundos: o gitleaks sobre o que vai entrar no commit e o script
 # `gancho` do package.json, que o projeto define com descritivos, lint e unidade. Exemplos:
 #   Node:   "gancho": "npm run --silent descritivos && npm run --silent lint && node --test api/test"
