@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { citacoesDoCerebro, conferirDescritivo, conferirNotas, conferirPerguntas, dadoSensivel, lerCabecalho, lerFonte, ligacoes, ligacoesNoTexto, numerosSemNatureza, perguntarAoAgente, temTravessao, textoDoModelo, rodar, SECOES, TAGS } from '../ferramentas/conferir.mjs';
+import { citacoesDoCerebro, conferirDescritivo, conferirNotas, conferirPerguntas, dadoSensivel, historicoNaNota, lerCabecalho, lerFonte, ligacoes, ligacoesNoTexto, numerosSemNatureza, perguntarAoAgente, temTravessao, textoDoModelo, rodar, SECOES, TAGS } from '../ferramentas/conferir.mjs';
 
 const secoes = (comTags = false) => SECOES.map((s, i) => `## ${s}\n\n${comTags ? `<${TAGS[i]}>\ntexto\n</${TAGS[i]}>` : 'texto'}\n`).join('\n');
 
@@ -204,6 +204,21 @@ test('C10: comentário ou texto do modelo que sobrou na nota', () => {
     'texto do modelo sobrou: "A conclusão em até três frases, com o número que a sustenta."',
   ]);
   assert.deepEqual(conferirNotas([nota('a.md', ok, `${ida('b')} A instrução fica em \`<!-- -->\` e sai.`), nota('b.md', ok, ida('a'))], FAC, { textosModelo }), []);
+});
+
+test('C11: histórico em nota viva; análise e arquivada podem guardar o que valia na data', () => {
+  const viva = `${ida('b')}\n\n## 11. Decisões e o que mudou\n\nA regra velha fica como histórico.\n\n### Histórico\n`;
+  assert.deepEqual(historicoNaNota(viva), [
+    'seção de histórico na nota viva: "11. Decisões e o que mudou" (o que mudou fica no Git)',
+    'seção de histórico na nota viva: "Histórico" (o que mudou fica no Git)',
+    'frase de histórico na nota viva: "A regra velha fica como histórico."',
+  ]);
+  assert.deepEqual(historicoNaNota('## Decisão\n\n## Dados reais da conta\n\n```\n## Histórico\n```'), []);
+  const oferta = ok.replace('tipo: analise', 'tipo: oferta');
+  const fac = { ...FAC, estado: [...FAC.estado, 'arquivado'] };
+  assert.equal(conferirNotas([nota('a.md', oferta, viva), nota('b.md', ok, ida('a'))], fac).length, 3);
+  assert.deepEqual(conferirNotas([nota('a.md', ok, viva), nota('b.md', ok, ida('a'))], fac), []);
+  assert.deepEqual(conferirNotas([nota('a.md', oferta.replace('validado', 'arquivado'), viva), nota('b.md', ok, ida('a'))], fac), []);
 });
 
 test('C5: perguntas de conferência, versão, contrato, fato e proibido; agente com executor falso', () => {

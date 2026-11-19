@@ -264,7 +264,8 @@ export function textoDoModelo(texto) {
  *
  * Do ADR 0017 do cérebro, quando `facetas.json` traz a chave: `acesso` vira a quinta faceta; com
  * `fonte`, o cabeçalho `fontes:` (C1). Sempre: natureza do número (C2), `substitui` e
- * `substituida_por` (C4), dado sensível (C6) e comentário ou texto de modelo que sobrou (C10).
+ * `substituida_por` (C4), dado sensível (C6), comentário ou texto de modelo que sobrou (C10) e
+ * histórico em nota viva (C11).
  * @param {{ caminho: string, texto: string }[]} notas
  * @param {Record<string, string[]>} facetas valores aceitos de cada faceta
  * @param {{ modelos?: Record<string, string[]>, textosModelo?: Record<string, string[]>, clientes?: string[], emailsPermitidos?: string[] }} [opcoes]
@@ -345,8 +346,29 @@ export function conferirNotas(notas, facetas, { modelos, textosModelo, clientes 
     // C10: comentário ou texto do modelo que sobrou.
     if (/<!--/.test(n.texto.replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, ''))) p('comentário de modelo (<!-- -->) sobrou na nota');
     for (const l of textosModelo?.[cab.tipo] ?? []) if (n.texto.includes(l)) p(`texto do modelo sobrou: "${l.slice(0, 60)}"`);
+    // C11: a nota viva diz só o que vale hoje; o que mudou fica no Git (cérebro, 19/11/2026).
+    if (cab.estado !== 'arquivado' && !TIPOS_RETRATO.includes(cab.tipo)) for (const x of historicoNaNota(n.texto)) p(x);
   }
   return problemas;
+}
+
+/** Tipos que são retrato de uma data e podem guardar o que valia nela (C11). */
+export const TIPOS_RETRATO = ['analise', 'brainstorm', 'ideia'];
+
+/**
+ * Histórico dentro de nota viva (C11): título de seção de decisões ou de histórico, ou frase que deixa
+ * a regra velha "como histórico". Fora de código.
+ * @param {string} texto
+ * @returns {string[]} problemas
+ */
+export function historicoNaNota(texto) {
+  const t = corpo(texto).replace(/```[\s\S]*?```/g, '');
+  const achados = [];
+  for (const m of t.matchAll(/^#{2,6}\s+(.+?)\s*$/gm)) {
+    if (/^(\d+\.\s*)?(hist[óo]rico|decis(õ|o)es)\b/i.test(m[1]) || /o que mudou/i.test(m[1])) achados.push(`seção de histórico na nota viva: "${m[1].slice(0, 60)}" (o que mudou fica no Git)`);
+  }
+  for (const m of t.matchAll(/[^\n]{0,40}\bficam? como hist[óo]rico[^\n]{0,20}/gi)) achados.push(`frase de histórico na nota viva: "${m[0].trim().slice(0, 70)}"`);
+  return achados;
 }
 
 const normal = (t) => t.toLowerCase().replace(/[*_`]/g, '').replace(/\s+/g, ' ');
