@@ -352,8 +352,8 @@ export function conferirNotas(notas, facetas, { modelos, textosModelo, clientes 
   return problemas;
 }
 
-/** Tipos que são retrato de uma data e podem guardar o que valia nela (C11). */
-export const TIPOS_RETRATO = ['analise', 'brainstorm', 'ideia'];
+/** Tipos que são retrato de uma data (a análise, a ideia, a decisão daquele dia) e podem guardar o que valia nela (C11). */
+export const TIPOS_RETRATO = ['analise', 'brainstorm', 'decisao', 'ideia'];
 
 /**
  * Histórico dentro de nota viva (C11): título de seção de decisões ou de histórico, ou frase que deixa

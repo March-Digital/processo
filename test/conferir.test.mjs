@@ -206,7 +206,7 @@ test('C10: comentário ou texto do modelo que sobrou na nota', () => {
   assert.deepEqual(conferirNotas([nota('a.md', ok, `${ida('b')} A instrução fica em \`<!-- -->\` e sai.`), nota('b.md', ok, ida('a'))], FAC, { textosModelo }), []);
 });
 
-test('C11: histórico em nota viva; análise e arquivada podem guardar o que valia na data', () => {
+test('C11: histórico em nota viva; análise, decisão e arquivada podem guardar o que valia na data', () => {
   const viva = `${ida('b')}\n\n## 11. Decisões e o que mudou\n\nA regra velha fica como histórico.\n\n### Histórico\n`;
   assert.deepEqual(historicoNaNota(viva), [
     'seção de histórico na nota viva: "11. Decisões e o que mudou" (o que mudou fica no Git)',
